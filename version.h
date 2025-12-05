@@ -1,0 +1,14 @@
+#ifndef BOOTMOD_VERSION_H
+#define BOOTMOD_VERSION_H
+
+#define BOOTMOD_VERSION_MAJOR 1
+#define BOOTMOD_VERSION_MINOR 0
+#define BOOTMOD_VERSION_PATCH 0
+#define BOOTMOD_VERSION_STRING "1.0.0"
+#define BOOTMOD_VERSION_DATE "2025-12-05"
+
+#define BOOTMOD_AUTHOR "BootMod Contributors"
+#define BOOTMOD_LICENSE "MIT"
+#define BOOTMOD_HOMEPAGE "https://github.com/badmaneers/bootmod"
+
+#endif // BOOTMOD_VERSION_H

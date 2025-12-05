@@ -1,0 +1,102 @@
+# Build artifacts
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.exe.manifest
+
+# Build directories
+build/
+bin/
+cmake-build-*/
+.cmake/
+dist/
+Debug/
+Release/
+x64/
+x86/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+_deps
+*.cmake
+!CMakeLists.txt
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.user
+*.sln.docstates
+.vs/
+*.VC.db
+*.VC.opendb
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Test files
+test_*/
+extracted/
+test_output/
+test_full_cycle/
+test_roundtrip/
+*.bin
+!example.bin
+*.z
+*.png
+!docs/*.png
+!resources/*.png
+!screenshots/*.png
+
+# Libraries
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+*.pdb
+*.ilk
+
+# Logs
+*.log
+*.tlog
+
+# Package files
+*.zip
+*.tar.gz
+*.7z
+*.rar
+
+# Documentation build
+docs/_build/
+site/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# Core dumps
+core
+core.*
+
+# Profiling
+*.prof
+*.gcda
+*.gcno
+gmon.out
