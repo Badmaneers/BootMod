@@ -2,15 +2,58 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20-lightgrey.svg)]()
-[![Language](https://img.shields.io/badge/language-C%2B%2B11-orange.svg)]()
+[![Language](https://img.shields.io/badge/language-C%2B%2B17-orange.svg)]()
+[![Version](https://img.shields.io/badge/version-1.5.0-brightgreen.svg)]()
 
-**BootMod** is a powerful cross-platform tool for customizing boot logos and splash screens on Android devices. Support for multiple chipset manufacturers including MediaTek (MTK) and Qualcomm Snapdragon.
+**BootMod** is a powerful cross-platform tool for customizing boot logos and splash screens on Android devices. Features both a mod### Next: v2.0.0 - Qualcomm Support (Q2 2025) 🚧
+- [ ] Qualcomm splash.img parser
+- [ ] Splash.img unpack/repack in both CLI and GUI
+- [ ] RLE compression/decompression
+- [ ] Auto-detect chipset type
+- [ ] Unified command interface
+- [ ] Cross-format conversion tools
+- [ ] Extended device database
+- [ ] GUI support for Qualcomm devices
 
-![BootMod](https://img.shields.io/badge/Boot-Mod-green.svg)
+### v2.5.0 - Cross-Platform & Enhanced GUI (Q3 2025)
+- [ ] Windows native build (MSVC/MinGW)
+- [ ] macOS support (Intel + Apple Silicon)
+- [ ] **Enhanced GUI Features**
+  - Built-in image editor with cropping/resizing
+  - Animation preview for charging sequences
+  - Logo templates library
+  - Side-by-side comparison mode
+  - Batch replace multiple logos
+  - Theme customization (Light/Dark/Custom)
+  - Undo/Redo support
+- [ ] ADB integration for direct device flashing
+- [ ] One-click backup/restore
+- [ ] Portable builds (AppImage, DMG, installer)d CLI tool for MediaTek (MTK) devices with planned support for Qualcomm Snapdragon.
+
+![BootMod Logo](gui/res/bootmod_logo.svg)
 
 ## 🎯 Features
 
-### Current (v1.0.0)
+### Current (v1.5.0)
+
+#### 🎨 Modern Qt6 GUI
+- ✅ **Professional Interface** - Zilium-inspired dark theme UI
+- ✅ **Project-Based Workflow** - Unpack, edit, and repack in one place
+  - Create projects from logo.bin files
+  - Edit logos directly in project folder
+  - Live thumbnail updates after replacement
+  - Export modified project to logo.bin
+- ✅ **Native File Dialogs** - System-native file pickers for better UX
+- ✅ **Drag & Drop Support** - Easy file loading
+- ✅ **Real-time Preview** - See logo changes instantly
+- ✅ **Individual Logo Operations**
+  - Extract any logo as PNG
+  - Replace logos with validation
+  - View resolution and format info
+- ✅ **Status Feedback** - Clear success/error messages
+- ✅ **Project Mode Indicator** - Know when logos can be edited
+
+#### 💻 Command-Line Interface
 - ✅ **MTK logo.bin** - Full support for MediaTek devices
   - Unpack logo.bin to extract boot logos and charging animations
   - Repack modified PNG images back to logo.bin
@@ -20,7 +63,7 @@
 - ✅ **Automatic compression** - Optimal zlib compression
 - ✅ **Info command** - Inspect boot image files without extraction
 - ✅ **Batch processing** - Extract specific logos with slot selection
-- ✅ **Cross-platform CLI** - Linux support (Windows/macOS coming soon)
+- ✅ **Version Management** - Unified versioning across CLI and GUI
 
 ### Planned Features 🚀
 
@@ -34,13 +77,18 @@
 - [ ] **Unified CLI** - Single tool for all chipsets
 - [ ] **Format conversion** - Convert between MTK and Qualcomm formats
 
-#### Phase 2: Cross-Platform & GUI (v2.5.0)
+#### Phase 2: Enhanced GUI & Cross-Platform (v2.5.0)
 - [ ] Windows native build
-- [ ] macOS support
-- [ ] Qt-based GUI for all platforms
-- [ ] Drag-and-drop interface
-- [ ] Live preview
-- [ ] Built-in image editor
+- [ ] macOS support (Intel + Apple Silicon)
+- [ ] **Enhanced GUI Features**
+  - Built-in image editor with cropping/resizing
+  - Animation preview for charging sequences
+  - Logo templates library
+  - Side-by-side comparison mode
+  - Batch replace multiple logos
+  - Theme customization (Light/Dark/Custom)
+- [ ] ADB integration for direct device flashing
+- [ ] One-click backup/restore
 
 #### Phase 3: Mobile & Advanced (v3.0.0)
 - [ ] Android app (separate branch)
@@ -51,11 +99,11 @@
 
 ## 🏗️ Supported Chipsets
 
-| Chipset | Status | Format | Version |
-|---------|--------|--------|---------|
-| **MediaTek (MTK)** | ✅ Fully Supported | logo.bin | v1.0+ |
-| **Qualcomm Snapdragon** | 🚧 In Development | splash.img | v2.0+ |
-| Samsung Exynos | 📋 Planned | - | v3.0+ |
+| Chipset | CLI Status | GUI Status | Format | Version |
+|---------|-----------|------------|--------|---------|
+| **MediaTek (MTK)** | ✅ Fully Supported | ✅ Fully Supported | logo.bin | v1.0+ |
+| **Qualcomm Snapdragon** | 🚧 In Development | 🚧 Planned | splash.img | v2.0+ |
+| Samsung Exynos | 📋 Planned | 📋 Planned | - | v3.0+ |
 
 ## 📋 Table of Contents
 
@@ -74,36 +122,107 @@
 
 **Ubuntu/Debian:**
 ```bash
+# For CLI only
 sudo apt-get install build-essential cmake zlib1g-dev libpng-dev
+
+# For GUI (additional)
+sudo apt-get install qt6-base-dev qt6-declarative-dev
 ```
 
 **Fedora/RHEL:**
 ```bash
+# For CLI only
 sudo dnf install gcc-c++ cmake zlib-devel libpng-devel
+
+# For GUI (additional)
+sudo dnf install qt6-qtbase-devel qt6-qtdeclarative-devel
 ```
 
 **Arch Linux:**
 ```bash
+# For CLI only
 sudo pacman -S base-devel cmake zlib libpng
+
+# For GUI (additional)
+sudo pacman -S qt6-base qt6-declarative
 ```
 
 ### Build and Install
 
+#### Quick Build (Recommended)
 ```bash
 # Clone the repository
 git clone https://github.com/Badmaneers/BootMod.git
 cd bootmod
 
-# Build
-make
+# Build both CLI and GUI (default version 1.5.0)
+./build.sh
 
-# Install (optional)
-sudo make install
+# Or build with specific version
+./build.sh --version=1.6.0
+
+# Build only CLI
+./build.sh --cli-only
+
+# Build only GUI
+./build.sh --gui-only
+
+# Clean build files
+./build.sh --clean
 ```
 
-The executable will be in `bin/bootmod`.
+#### Manual Build
+
+**CLI Tool:**
+```bash
+make                 # Build CLI
+make install        # Install to /usr/local/bin
+```
+
+**GUI Application:**
+```bash
+cd gui
+mkdir build && cd build
+cmake ..
+make
+```
+
+### Binaries Location
+- **CLI**: `bin/bootmod`
+- **GUI**: `gui/build/bootmod-gui`
 
 ## 📖 Usage
+
+### GUI Application
+
+Launch the GUI application:
+```bash
+./gui/build/bootmod-gui
+```
+
+#### Project-Based Workflow (Recommended)
+
+1. **Open a logo.bin file** - Click "Browse..." or drag & drop
+2. **Create Project** - Click "Unpack to Project" and select an empty folder
+3. **Edit Logos** - Navigate to `project_folder/images/` and edit PNG files with your favorite editor
+4. **Replace in GUI** - Click "Replace" on any logo card, select your edited PNG
+   - The GUI validates dimensions automatically
+   - Thumbnails update in real-time
+5. **Export** - Click "Export logo.bin" to create the flashable file
+
+#### File Mode (Quick Export)
+- Open logo.bin directly to view and export individual logos
+- Export specific logos as PNG for inspection
+- Limited to read-only operations (no replace)
+
+#### GUI Features
+- **Project Mode Indicator**: Shows whether you can edit (Project) or only view (File Mode)
+- **Logo Stats**: See resolution, format, and compressed size for each logo
+- **Status Messages**: Real-time feedback for all operations
+- **Native Dialogs**: Uses system file pickers for familiar UX
+- **About Dialog**: View version, features, and developer info (click "About" in status bar)
+
+### Command-Line Interface
 
 ### MediaTek (MTK) Devices
 
@@ -174,7 +293,39 @@ bootmod repack <output_file> <input_files> [options]
 
 ## 💡 Examples
 
-### Example 1: Replace MTK Boot Logo
+### Example 1: Replace MTK Boot Logo (GUI Method)
+
+```bash
+# 1. Launch GUI
+./gui/build/bootmod-gui
+
+# 2. Open logo.bin file (Browse button or drag & drop)
+#    - File appears in the text field
+#    - Logo grid displays all images
+
+# 3. Create a project
+#    - Click "Unpack to Project"
+#    - Select empty folder (e.g., ~/bootmod_project)
+#    - All logos extracted automatically
+
+# 4. Edit logos externally
+#    - Navigate to ~/bootmod_project/images/
+#    - Edit logo_1_720x1280.png with GIMP/Photoshop/etc.
+#    - IMPORTANT: Keep same dimensions (720x1280)
+
+# 5. Replace in GUI
+#    - Click "Replace" button on Logo #1 card
+#    - Select your edited logo_1_720x1280.png
+#    - Thumbnail updates automatically
+#    - Dimension validation ensures compatibility
+
+# 6. Export new logo.bin
+#    - Click "Export logo.bin"
+#    - Save as new_logo.bin
+#    - Flash to device via fastboot
+```
+
+### Example 2: Replace MTK Boot Logo (CLI Method)
 
 ```bash
 # 1. Extract the boot logo (usually logo 1)
@@ -192,7 +343,7 @@ adb reboot bootloader
 fastboot flash logo new_logo.bin
 ```
 
-### Example 2: Qualcomm Splash Screen (Coming v2.0)
+### Example 3: Inspect Boot Image
 
 ```bash
 # 1. Extract splash screen
@@ -230,6 +381,22 @@ Logo Details:
   Logo 2: 786530 bytes (zlib) -> 4608000 bytes (720x1600)
   Logo 69: 1143 bytes (zlib) -> 7200 bytes (36x50 battery)
   ...
+```
+
+### Example 4: Qualcomm Splash Screen (Coming v2.0)
+
+```bash
+# 1. Extract splash screen
+bootmod unpack splash.img extracted/
+
+# 2. Edit your custom logo
+gimp extracted/splash_logo.png
+
+# 3. Repack
+bootmod repack new_splash.img extracted/splash_logo.png
+
+# 4. Flash to device
+fastboot flash splash new_splash.img
 ```
 
 ## 📐 File Formats
@@ -271,8 +438,37 @@ Logo Details:
 
 ## 🔧 Building from Source
 
-### Using Make (Recommended)
+### Using Unified Build Script (Recommended)
 
+```bash
+# Build both CLI and GUI with default version (1.5.0)
+./build.sh
+
+# Build with custom version
+./build.sh --version=1.6.0
+
+# Build only CLI tool
+./build.sh --cli-only
+
+# Build only GUI application  
+./build.sh --gui-only
+
+# Clean all build artifacts
+./build.sh --clean
+
+# Show help
+./build.sh --help
+```
+
+The build script automatically:
+- Checks for required dependencies (gcc, qt6, zlib, libpng)
+- Updates version numbers in all files
+- Compiles with parallel jobs
+- Provides build summary with binary locations
+
+### Manual Build Methods
+
+#### CLI Tool (Make)
 ```bash
 make                 # Build
 make clean          # Clean build files
@@ -280,27 +476,47 @@ make install        # Install to /usr/local/bin
 make test           # Run tests
 ```
 
-### Using CMake
-
+#### GUI Application (CMake)
 ```bash
-mkdir build
-cd build
+cd gui
+mkdir build && cd build
+export BOOTMOD_VERSION="1.5.0"  # Optional: Set version
 cmake ..
-make
-sudo make install
+make -j$(nproc)
 ```
+
+### Dependencies
+
+**Required for CLI:**
+- GCC/Clang with C++17 support
+- CMake 3.16+
+- zlib development files
+- libpng development files
+
+**Additional for GUI:**
+- Qt6 (6.0+)
+  - Qt6Core
+  - Qt6Gui
+  - Qt6Quick
+  - Qt6Qml
+  - Qt6Widgets
 
 ## 🗺️ Roadmap
 
-### Current: v1.0.0 - MTK Foundation ✅
-- [x] MTK logo.bin support
-- [x] Unpack/repack functionality
-- [x] Multiple color formats
-- [x] Smart dimension detection
-- [x] Info command
-- [x] Linux CLI support
+### Current: v1.5.0 - GUI & Project Workflow ✅
+- [x] Qt6-based GUI with modern dark theme
+- [x] Project-based workflow (unpack → edit → repack)
+- [x] Live thumbnail updates after logo replacement
+- [x] Native file dialogs for better UX
+- [x] Drag & drop support
+- [x] Individual logo export/replace operations
+- [x] Real-time status feedback
+- [x] Professional branding and logo
+- [x] Unified build system with version management
+- [x] CLI tool with MTK logo.bin support
+- [x] Linux support
 
-### Next: v2.0.0 - Qualcomm Support (Q1 2026) 🚧
+### Next: v2.0.0 - Qualcomm Support (Q2 2025) 🚧
 - [ ] Qualcomm splash.img parser
 - [ ] Splash.img unpack/repack
 - [ ] RLE compression/decompression
@@ -321,7 +537,7 @@ sudo make install
 - [ ] One-click device flashing
 - [ ] Logo templates library
 
-### v3.0.0 - Mobile & Advanced (Q3 2026)
+### v3.0.0 - Mobile & Advanced (Q4 2025)
 - [ ] **Android App** (separate branch)
   - Root and non-root modes
   - Direct logo.bin/splash.img modification
@@ -332,7 +548,7 @@ sudo make install
 - [ ] HiSilicon Kirin support
 - [ ] Cloud backup integration
 - [ ] AI-powered logo enhancement
-- [ ] Animation preview
+- [ ] Animation preview in all platforms
 
 ### v4.0.0 - Enterprise (Future)
 - [ ] Batch processing for manufacturers
@@ -345,52 +561,60 @@ sudo make install
 
 ```
 bootmod/
-├── src/                    # Source files
+├── src/                    # CLI source files
 │   ├── bootmod.cpp         # MTK logo.bin parsing and core functionality
 │   ├── bootmod_png.cpp     # PNG I/O and image processing
 │   └── main.cpp            # CLI interface and command handling
 ├── include/                # Header files
-│   ├── bootmod.h           # Core header file with class declarations
-│   └── version.h           # Version information and metadata
-├── docs/                   # Documentation
-│   ├── ROADMAP.md          # Detailed development roadmap
-│   ├── CHANGELOG.md        # Version history and changes
-│   ├── CONTRIBUTING.md     # Contribution guidelines
-│   └── TODO.md             # Task tracking and future features
-├── tests/                  # Test files (coming soon)
-├── examples/               # Example files and usage (coming soon)
-├── .github/                # GitHub-specific files
-│   └── workflows/
-│       └── build.yml       # CI/CD pipeline configuration
-├── build/                  # Build artifacts (generated)
-├── bin/                    # Compiled binaries (generated)
-├── CMakeLists.txt          # CMake build configuration
-├── Makefile                # Simple Makefile for quick builds
-├── build.sh                # Build script with dependency checking
-├── README.md               # This file - project documentation
+│   └── bootmod.h           # Core header with class declarations
+├── gui/                    # Qt6 GUI application
+│   ├── src/                # GUI C++ source files
+│   │   ├── main.cpp        # GUI entry point with version exposure
+│   │   ├── logofile.cpp    # Logo file operations and project management
+│   │   ├── logolistmodel.cpp # Qt model for logo list
+│   │   ├── thumbnailprovider.cpp # QML image provider
+│   │   └── appcontext.cpp  # Application context singleton
+│   ├── qml/                # QML UI files
+│   │   ├── Main.qml        # Main application window
+│   │   └── AboutDialog.qml # About dialog with developer info
+│   ├── res/                # Resources
+│   │   └── bootmod_logo.svg # Application logo (48x48 SVG)
+│   ├── build/              # CMake build directory (generated)
+│   └── CMakeLists.txt      # GUI build configuration with version management
+├── build/                  # CLI build artifacts (generated)
+├── bin/                    # CLI compiled binary (generated)
+├── build.sh                # Unified build script with version management
+├── Makefile                # CLI build configuration
+├── CMakeLists.txt          # GUI CMake configuration
+├── README.md               # This file - comprehensive documentation
 ├── LICENSE                 # MIT License
-└── .gitignore              # Git ignore patterns
+└── .gitignore              # Git ignore patterns (includes Qt/build artifacts)
 ```
 
-### Planned Structure (v2.0+)
-```
-bootmod/
-├── src/
-│   ├── core/               # Core boot image handling
-│   ├── mtk/                # MTK-specific implementation
-│   ├── qualcomm/           # Qualcomm splash.img support
-│   └── gui/                # GUI components (Qt6)
-├── include/
-│   ├── bootmod/            # Public API headers
-│   ├── mtk/                # MTK-specific headers
-│   └── qualcomm/           # Qualcomm-specific headers
-├── tests/
-│   ├── unit/               # Unit tests
-│   └── integration/        # Integration tests
-└── docs/
-    ├── api/                # API documentation
-    └── guides/             # User guides and tutorials
-```
+### Key Components
+
+#### CLI Tool (`src/`)
+- **bootmod.cpp**: Core MTK logo.bin parser, LogoImage class, MtkHeader, compression/decompression
+- **bootmod_png.cpp**: PNG loading/saving with ImageUtils, color format conversions
+- **main.cpp**: Command-line interface with info/unpack/repack commands
+
+#### GUI Application (`gui/`)
+- **logofile.cpp/h**: Backend for file operations, project management, native dialogs
+- **logolistmodel.cpp/h**: Qt AbstractListModel for QML GridView
+- **thumbnailprovider.cpp/h**: QQuickImageProvider for efficient thumbnail rendering
+- **appcontext.cpp/h**: Singleton for sharing thumbnail provider across components
+- **Main.qml**: Main UI with Zilium-inspired design, project workflow, drag-drop
+- **AboutDialog.qml**: About dialog with version, features, developer links
+
+#### Build System
+- **build.sh**: Unified bash script
+  - Version management (--version flag)
+  - Selective builds (--cli-only, --gui-only)
+  - Dependency checking
+  - Parallel compilation
+  - Updates Makefile and CMakeLists.txt versions
+- **Makefile**: CLI builds with VERSION variable
+- **gui/CMakeLists.txt**: Qt6 GUI builds with BOOTMOD_VERSION from environment
 
 ## 🎯 Supported Devices
 
@@ -418,10 +642,28 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ### Priority Areas
 1. **Qualcomm splash.img implementation** (High priority)
-2. Windows/macOS support
-3. GUI development (Qt6)
-4. Device testing and compatibility
-5. Documentation and tutorials
+2. Windows/macOS support and testing
+3. GUI enhancements and new features
+4. Device testing and compatibility reports
+5. Documentation, tutorials, and video guides
+6. Bug reports and fixes
+7. Logo templates and presets
+
+### Development Setup
+```bash
+# Fork and clone the repository
+git clone https://github.com/YOUR_USERNAME/BootMod.git
+cd bootmod
+
+# Build and test
+./build.sh --version=dev
+
+# Make changes and test
+./bin/bootmod info test_files/logo.bin
+./gui/build/bootmod-gui
+
+# Submit PR with clear description
+```
 
 ## ⚠️ Warnings
 
@@ -455,9 +697,24 @@ MIT License - see [LICENSE](LICENSE) file.
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/Badmaneers/BootMod/issues)
-- **Discussions**: [GitHub Discussions](- **Issues**: [GitHub Issues](https://github.com/Badmaneers/BootMod/discussions)
+- **Discussions**: [GitHub Discussions](https://github.com/Badmaneers/BootMod/discussions)
+- **Telegram**: [@DumbDragon](https://t.me/DumbDragon)
 - **XDA Thread**: Coming soon
 - **Discord**: Coming soon
+
+## 🌟 Screenshots
+
+### GUI Application
+![BootMod GUI - Main Window](screenshots/main-window.png)
+*Modern Qt6 interface with project-based workflow*
+
+![BootMod GUI - Logo Grid](screenshots/logo-grid.png)
+*Visual logo browser with thumbnails and metadata*
+
+![BootMod GUI - About Dialog](screenshots/about-dialog.png)
+*About dialog with features and developer info*
+
+> **Note**: Screenshots coming soon. The GUI features a professional dark theme inspired by Zilium with native system dialogs.
 
 ## 🌟 Star History
 

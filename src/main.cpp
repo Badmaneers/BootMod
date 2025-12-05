@@ -1,11 +1,14 @@
 #include "bootmod.h"
-#include "version.h"
 #include <iostream>
 #include <cstring>
 #include <vector>
 
+#ifndef VERSION
+#define VERSION "1.6.0"
+#endif
+
 void printUsage(const char* program) {
-    std::cout << "BootMod - Universal Boot Logo/Splash Editor v" << BOOTMOD_VERSION_STRING << "\n";
+    std::cout << "BootMod - Universal Boot Logo/Splash Editor v" << VERSION << "\n";
     std::cout << "Supports: MediaTek logo.bin, Qualcomm splash.img\n\n";
     std::cout << "Usage: " << program << " <command> [options]\n\n";
     std::cout << "Commands:\n";
@@ -173,11 +176,11 @@ int main(int argc, char* argv[]) {
         } else if (command == "info") {
             return cmdInfo(argc, argv);
         } else if (command == "version" || command == "--version" || command == "-v") {
-            std::cout << "BootMod v" << BOOTMOD_VERSION_STRING << "\n";
+            std::cout << "BootMod v" << VERSION << "\n";
             std::cout << "Universal Boot Logo/Splash Editor\n";
-            std::cout << "Build date: " << BOOTMOD_VERSION_DATE << "\n";
-            std::cout << "License: " << BOOTMOD_LICENSE << "\n";
-            std::cout << "Homepage: " << BOOTMOD_HOMEPAGE << "\n";
+            std::cout << "Build: " << __DATE__ << " " << __TIME__ << "\n";
+            std::cout << "License: MIT\n";
+            std::cout << "Homepage: https://github.com/Badmaneers/BootMod\n";
             return 0;
         } else if (command == "help" || command == "--help" || command == "-h") {
             printUsage(argv[0]);

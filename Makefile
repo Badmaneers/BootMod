@@ -1,6 +1,10 @@
+# Project info
+VERSION = 555
+PROJECT = bootmod
+
 # Compiler
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -O2 -Iinclude
+CXXFLAGS = -std=c++11 -Wall -Wextra -O2 -Iinclude -DVERSION=\"$(VERSION)\"
 
 # Libraries
 LIBS = -lz -lpng
@@ -14,7 +18,7 @@ BIN_DIR = bin
 # Source files
 SOURCES = $(SRC_DIR)/bootmod.cpp $(SRC_DIR)/bootmod_png.cpp $(SRC_DIR)/main.cpp
 OBJECTS = $(BUILD_DIR)/bootmod.o $(BUILD_DIR)/bootmod_png.o $(BUILD_DIR)/main.o
-TARGET = bootmod
+TARGET = $(PROJECT)
 
 # Default target
 all: $(BIN_DIR)/$(TARGET)

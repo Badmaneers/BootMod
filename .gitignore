@@ -100,3 +100,24 @@ core.*
 *.gcda
 *.gcno
 gmon.out
+
+# Qt/QML build artifacts
+gui/build/
+gui/qml/BootMod/
+gui/qml/.qt/
+*_qmltyperegistrations.cpp
+*_autogen/
+moc_*.cpp
+qrc_*.cpp
+*.qrc.depends
+
+# Temporary documentation
+NATIVE_DIALOGS_AND_SCALING.md
+LOGO_ORDER_FIX.md
+REPLACE_FEATURE.md
+REPLACE_THUMBNAIL_FIX.md
+CLOSE_PROJECT_BUTTON.md
+
+# Backup files
+gui.backup/
+*.backup
