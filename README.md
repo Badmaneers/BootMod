@@ -345,37 +345,51 @@ sudo make install
 
 ```
 bootmod/
-├── bootmod.h           # Core header file with class declarations
-├── bootmod.cpp         # MTK logo.bin parsing and core functionality
-├── bootmod_png.cpp     # PNG I/O and image processing
-├── main.cpp            # CLI interface and command handling
-├── version.h           # Version information and metadata
-├── CMakeLists.txt      # CMake build configuration
-├── Makefile            # Simple Makefile for quick builds
-├── build.sh            # Build script with dependency checking
-├── README.md           # This file - project documentation
-├── ROADMAP.md          # Detailed development roadmap
-├── CHANGELOG.md        # Version history and changes
-├── CONTRIBUTING.md     # Contribution guidelines
-├── TODO.md             # Task tracking and future features
-├── LICENSE             # MIT License
-├── .gitignore          # Git ignore patterns
-└── .github/
-    └── workflows/
-        └── build.yml   # CI/CD pipeline configuration
+├── src/                    # Source files
+│   ├── bootmod.cpp         # MTK logo.bin parsing and core functionality
+│   ├── bootmod_png.cpp     # PNG I/O and image processing
+│   └── main.cpp            # CLI interface and command handling
+├── include/                # Header files
+│   ├── bootmod.h           # Core header file with class declarations
+│   └── version.h           # Version information and metadata
+├── docs/                   # Documentation
+│   ├── ROADMAP.md          # Detailed development roadmap
+│   ├── CHANGELOG.md        # Version history and changes
+│   ├── CONTRIBUTING.md     # Contribution guidelines
+│   └── TODO.md             # Task tracking and future features
+├── tests/                  # Test files (coming soon)
+├── examples/               # Example files and usage (coming soon)
+├── .github/                # GitHub-specific files
+│   └── workflows/
+│       └── build.yml       # CI/CD pipeline configuration
+├── build/                  # Build artifacts (generated)
+├── bin/                    # Compiled binaries (generated)
+├── CMakeLists.txt          # CMake build configuration
+├── Makefile                # Simple Makefile for quick builds
+├── build.sh                # Build script with dependency checking
+├── README.md               # This file - project documentation
+├── LICENSE                 # MIT License
+└── .gitignore              # Git ignore patterns
 ```
 
 ### Planned Structure (v2.0+)
 ```
 bootmod/
 ├── src/
-│   ├── core/           # Core boot image handling
-│   ├── mtk/            # MTK-specific implementation
-│   ├── qualcomm/       # Qualcomm splash.img support
-│   └── gui/            # GUI components (Qt6)
-├── include/            # Public headers
-├── tests/              # Unit and integration tests
-└── docs/               # Additional documentation
+│   ├── core/               # Core boot image handling
+│   ├── mtk/                # MTK-specific implementation
+│   ├── qualcomm/           # Qualcomm splash.img support
+│   └── gui/                # GUI components (Qt6)
+├── include/
+│   ├── bootmod/            # Public API headers
+│   ├── mtk/                # MTK-specific headers
+│   └── qualcomm/           # Qualcomm-specific headers
+├── tests/
+│   ├── unit/               # Unit tests
+│   └── integration/        # Integration tests
+└── docs/
+    ├── api/                # API documentation
+    └── guides/             # User guides and tutorials
 ```
 
 ## 🎯 Supported Devices

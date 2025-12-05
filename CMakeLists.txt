@@ -8,16 +8,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
 
+# Include directories
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 # Source files
 set(SOURCES
-    mtklogo.cpp
-    mtklogo_png.cpp
-    main.cpp
+    src/bootmod.cpp
+    src/bootmod_png.cpp
+    src/main.cpp
 )
 
 # Header files
 set(HEADERS
-    mtklogo.h
+    include/bootmod.h
+    include/version.h
 )
 
 # Create executable
@@ -51,12 +55,12 @@ install(TARGETS bootmod
 
 # Create library version (optional)
 add_library(bootmod_lib STATIC
-    mtklogo.cpp
-    mtklogo_png.cpp
+    src/bootmod.cpp
+    src/bootmod_png.cpp
 )
 
 target_include_directories(bootmod_lib PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${PNG_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
 )
