@@ -5,7 +5,8 @@
 [![Language](https://img.shields.io/badge/language-C%2B%2B17-orange.svg)]()
 [![Version](https://img.shields.io/badge/version-1.5.0-brightgreen.svg)]()
 
-**BootMod** is a powerful cross-platform tool for customizing boot logos and splash screens on Android devices. Features both a mod### Next: v2.0.0 - Qualcomm Support (Q2 2025) 🚧
+**BootMod** is a powerful cross-platform tool for customizing boot logos and splash screens on Android devices. Features both a mod
+### Next: v2.0.0 - Qualcomm Support (Q2 2025) 🚧
 - [ ] Qualcomm splash.img parser
 - [ ] Splash.img unpack/repack in both CLI and GUI
 - [ ] RLE compression/decompression
