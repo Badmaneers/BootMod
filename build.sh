@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Default version
-VERSION="1.1.0"
+VERSION="2.0.0"
 
 # Colors for output
 RED='\033[0;31m'
