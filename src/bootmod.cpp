@@ -6,6 +6,39 @@
 #include <cstring>
 #include <zlib.h>
 
+namespace bootmod {
+
+// Format detection implementation
+FormatType detectFormat(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        return FormatType::UNKNOWN;
+    }
+    
+    // Check for MTK magic at offset 0x0
+    uint8_t magic_bytes[4];
+    file.seekg(0);
+    file.read(reinterpret_cast<char*>(magic_bytes), 4);
+    
+    // MTK magic: 0x88 0x16 0x88 0x58 (in file order)
+    if (magic_bytes[0] == 0x88 && magic_bytes[1] == 0x16 && 
+        magic_bytes[2] == 0x88 && magic_bytes[3] == 0x58) {
+        return FormatType::MTK_LOGO;
+    }
+    
+    // Check for OPPO splash magic at offset 0x4000
+    file.seekg(0x4000);
+    char oppo_magic[12];
+    file.read(oppo_magic, 12);
+    if (memcmp(oppo_magic, "SPLASH LOGO!", 12) == 0) {
+        return FormatType::OPPO_SPLASH;
+    }
+    
+    return FormatType::UNKNOWN;
+}
+
+} // namespace bootmod
+
 namespace mtklogo {
 
 // Helper: Read uint32 in Little Endian

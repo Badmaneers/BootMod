@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 if(DEFINED ENV{BOOTMOD_VERSION})
     set(PROJECT_VERSION $ENV{BOOTMOD_VERSION})
 else()
-    set(PROJECT_VERSION "gay")
+    set(PROJECT_VERSION "2.0.0")
 endif()
 
 project(bootmod-gui VERSION ${PROJECT_VERSION} LANGUAGES CXX)
@@ -24,6 +24,11 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Quick Qml Widgets)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
 
+# lodepng library
+set(LODEPNG_DIR ${CMAKE_SOURCE_DIR}/../external/lodepng)
+add_library(lodepng STATIC ${LODEPNG_DIR}/lodepng.cpp)
+target_include_directories(lodepng PUBLIC ${LODEPNG_DIR})
+
 # Source files
 set(SOURCES
     src/main.cpp
@@ -33,6 +38,7 @@ set(SOURCES
     src/appcontext.cpp
     ../src/bootmod.cpp
     ../src/bootmod_png.cpp
+    ../src/splash.cpp
 )
 
 set(HEADERS
@@ -41,6 +47,7 @@ set(HEADERS
     src/thumbnailprovider.h
     src/appcontext.h
     ../include/bootmod.h
+    ../include/splash.h
 )
 
 # QML files
@@ -69,6 +76,7 @@ qt6_add_qml_module(bootmod-gui
 target_include_directories(bootmod-gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${LODEPNG_DIR}
 )
 
 # Link libraries
@@ -80,6 +88,7 @@ target_link_libraries(bootmod-gui PRIVATE
     Qt6::Widgets
     ZLIB::ZLIB
     PNG::PNG
+    lodepng
 )
 
 # Install

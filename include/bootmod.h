@@ -7,6 +7,20 @@
 #include <memory>
 #include <stdexcept>
 
+namespace bootmod {
+
+// Boot image format enumeration
+enum class FormatType {
+    UNKNOWN,
+    MTK_LOGO,      // MediaTek logo.bin
+    OPPO_SPLASH    // Snapdragon splash.img
+};
+
+// Format detection utility
+FormatType detectFormat(const std::string& filename);
+
+} // namespace bootmod
+
 namespace mtklogo {
 
 // Endianness enumeration

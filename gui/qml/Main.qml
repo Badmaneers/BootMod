@@ -9,7 +9,7 @@ ApplicationWindow {
     width: 1200
     height: 800
     visible: true
-    title: logoFile.isLoaded ? "BootMod - " + logoFile.filePath : "BootMod - MTK Logo Manager"
+    title: logoFile.isLoaded ? "BootMod - " + logoFile.filePath : "BootMod - Boot Logo Manager"
     
     // Theme properties
     readonly property bool isDark: true
@@ -50,8 +50,8 @@ ApplicationWindow {
     // File Dialogs (using native system dialogs)
     FileDialog {
         id: openDialog
-        title: "Open Logo File"
-        nameFilters: ["Logo files (*.bin)", "All files (*)"]
+        title: "Open Boot Logo File"
+        nameFilters: ["Boot Logo files (*.bin *.img)", "Logo.bin (*.bin)", "Splash.img (*.img)", "All files (*)"]
         onAccepted: logoFile.loadFile(urlToPath(selectedFile))
     }
     
@@ -63,8 +63,8 @@ ApplicationWindow {
     
     FileDialog {
         id: saveDialog
-        title: "Save Logo File"
-        nameFilters: ["Logo files (*.bin)", "All files (*)"]
+        title: "Save Boot Logo File"
+        nameFilters: ["Boot Logo files (*.bin *.img)", "Logo.bin (*.bin)", "Splash.img (*.img)", "All files (*)"]
         fileMode: FileDialog.SaveFile
         onAccepted: logoFile.saveFile(urlToPath(selectedFile))
     }
@@ -124,8 +124,8 @@ ApplicationWindow {
     
     FileDialog {
         id: exportProjectDialog
-        title: "Export as logo.bin"
-        nameFilters: ["Logo files (*.bin)", "All files (*)"]
+        title: "Export Boot Logo File"
+        nameFilters: ["Boot Logo files (*.bin *.img)", "Logo.bin (*.bin)", "Splash.img (*.img)", "All files (*)"]
         fileMode: FileDialog.SaveFile
         defaultSuffix: "bin"
         onAccepted: logoFile.exportProject(urlToPath(selectedFile))
@@ -181,7 +181,7 @@ ApplicationWindow {
                     }
                     
                     Text {
-                        text: logoFile.isLoaded ? logoFile.headerInfo : "MediaTek Logo Manager · Unpack, Edit & Repack"
+                        text: logoFile.isLoaded ? logoFile.headerInfo : "Boot Logo Manager · MediaTek & Qualcomm Support"
                         font.pixelSize: 11
                         color: root.textSecondaryColor
                     }
@@ -247,10 +247,10 @@ ApplicationWindow {
                             spacing: root.spacing
                             
                             Text {
-                                text: "Logo File:"
+                                text: "Logo/Splash File:"
                                 font.pixelSize: 13
                                 color: root.textColor
-                                Layout.preferredWidth: 80
+                                Layout.preferredWidth: 88
                             }
                             
                             TextField {
@@ -366,7 +366,7 @@ ApplicationWindow {
                             }
                             
                             Button {
-                                text: "Export logo.bin"
+                                text: "Export File"
                                 enabled: logoFile.isLoaded
                                 Layout.preferredWidth: 120
                                 Layout.preferredHeight: 32
@@ -632,10 +632,8 @@ ApplicationWindow {
                                         font.pixelSize: 11
                                         
                                         onClicked: {
-                                            var path = logoFile.browseForImage()
-                                            if (path !== "") {
-                                                logoFile.extractLogo(logoIndex, path)
-                                            }
+                                            exportImageDialog.logoIndex = logoIndex
+                                            exportImageDialog.open()
                                         }
                                         
                                         background: Rectangle {
@@ -739,7 +737,7 @@ ApplicationWindow {
                         
                         Text {
                             Layout.alignment: Qt.AlignHCenter
-                            text: "Click 'Browse...' above to select a logo.bin file"
+                            text: "Click 'Browse...' above to open a logo.bin or splash.img file"
                             font.pixelSize: 14
                             color: root.textSecondaryColor
                         }
@@ -835,6 +833,25 @@ ApplicationWindow {
                     color: root.textSecondaryColor
                 }
             }
+        }
+    }
+    
+    // Export Individual Image Dialog
+    FileDialog {
+        id: exportImageDialog
+        title: "Export Image"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["PNG Images (*.png)"]
+        defaultSuffix: "png"
+        
+        property int logoIndex: 1
+        
+        onAccepted: {
+            var path = selectedFile.toString()
+            if (path.startsWith("file://")) {
+                path = path.substring(7)
+            }
+            logoFile.extractLogo(logoIndex, path)
         }
     }
     

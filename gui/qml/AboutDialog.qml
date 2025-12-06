@@ -8,7 +8,7 @@ Dialog {
     modal: true
     anchors.centerIn: parent
     width: 500
-    height: 600
+    height: 680
     
     property color bgColor: "#1e1e1e"
     property color surfaceColor: "#252526"
@@ -68,7 +68,7 @@ Dialog {
         }
         
         Text {
-            text: "A powerful GUI tool for unpacking, editing, and repacking MediaTek logo.bin files. Built with Qt6 and modern C++."
+            text: "A powerful GUI tool for unpacking, editing, and repacking boot logo files. Supports both MediaTek logo.bin and Qualcomm Snapdragon splash.img formats. Built with Qt6 and modern C++."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
             color: textColor
@@ -92,6 +92,16 @@ Dialog {
             rowSpacing: 8
             Layout.alignment: Qt.AlignHCenter
             
+            Text {
+                text: "• MediaTek logo.bin support"
+                color: textSecondaryColor
+                font.pixelSize: 11
+            }
+            Text {
+                text: "• Qualcomm splash.img support"
+                color: textSecondaryColor
+                font.pixelSize: 11
+            }
             Text {
                 text: "• Extract logo images"
                 color: textSecondaryColor
@@ -135,7 +145,7 @@ Dialog {
         // Developer Info
         ColumnLayout {
             Layout.alignment: Qt.AlignHCenter
-            spacing: 12
+            spacing: 8
             
             Text {
                 text: "👨‍💻 Developer"
@@ -147,7 +157,7 @@ Dialog {
             
             // GitHub Link
             RowLayout {
-                spacing: 10
+                spacing: 8
                 Layout.alignment: Qt.AlignHCenter
                 
                 Rectangle {
@@ -192,7 +202,7 @@ Dialog {
             
             // Telegram Link
             RowLayout {
-                spacing: 10
+                spacing: 8
                 Layout.alignment: Qt.AlignHCenter
                 
                 Rectangle {
@@ -236,7 +246,7 @@ Dialog {
             }
         }
         
-        Item { Layout.preferredHeight: 8 }
+        Item { Layout.preferredHeight: 4 }
         
         Text {
             text: "Made with ❤️ by Badmaneers"

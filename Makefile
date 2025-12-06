@@ -1,10 +1,10 @@
 # Project info
-VERSION = 555
+VERSION = 2.0.0
 PROJECT = bootmod
 
 # Compiler
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -O2 -Iinclude -DVERSION=\"$(VERSION)\"
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -Iinclude -Iexternal/lodepng -DVERSION=\"$(VERSION)\"
 
 # Libraries
 LIBS = -lz -lpng
@@ -14,10 +14,15 @@ SRC_DIR = src
 INCLUDE_DIR = include
 BUILD_DIR = build
 BIN_DIR = bin
+EXTERNAL_DIR = external
+
+# Lodepng
+LODEPNG_DIR = $(EXTERNAL_DIR)/lodepng
+LODEPNG_SRC = $(LODEPNG_DIR)/lodepng.cpp
 
 # Source files
-SOURCES = $(SRC_DIR)/bootmod.cpp $(SRC_DIR)/bootmod_png.cpp $(SRC_DIR)/main.cpp
-OBJECTS = $(BUILD_DIR)/bootmod.o $(BUILD_DIR)/bootmod_png.o $(BUILD_DIR)/main.o
+SOURCES = $(SRC_DIR)/bootmod.cpp $(SRC_DIR)/bootmod_png.cpp $(SRC_DIR)/splash.cpp $(SRC_DIR)/main.cpp $(LODEPNG_SRC)
+OBJECTS = $(BUILD_DIR)/bootmod.o $(BUILD_DIR)/bootmod_png.o $(BUILD_DIR)/splash.o $(BUILD_DIR)/main.o $(BUILD_DIR)/lodepng.o
 TARGET = $(PROJECT)
 
 # Default target
@@ -42,7 +47,13 @@ $(BUILD_DIR)/bootmod.o: $(SRC_DIR)/bootmod.cpp $(INCLUDE_DIR)/bootmod.h $(INCLUD
 $(BUILD_DIR)/bootmod_png.o: $(SRC_DIR)/bootmod_png.cpp $(INCLUDE_DIR)/bootmod.h $(INCLUDE_DIR)/version.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/main.o: $(SRC_DIR)/main.cpp $(INCLUDE_DIR)/bootmod.h $(INCLUDE_DIR)/version.h
+$(BUILD_DIR)/splash.o: $(SRC_DIR)/splash.cpp $(INCLUDE_DIR)/splash.h $(INCLUDE_DIR)/bootmod.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/lodepng.o: $(LODEPNG_SRC) $(LODEPNG_DIR)/lodepng.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/main.o: $(SRC_DIR)/main.cpp $(INCLUDE_DIR)/bootmod.h $(INCLUDE_DIR)/splash.h $(INCLUDE_DIR)/version.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Clean build files
