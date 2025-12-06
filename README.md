@@ -3,18 +3,29 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20-lightgrey.svg)]()
 [![Language](https://img.shields.io/badge/language-C%2B%2B17-orange.svg)]()
-[![Version](https://img.shields.io/badge/version-1.5.0-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)]()
 
-**BootMod** is a powerful cross-platform tool for customizing boot logos and splash screens on Android devices. Features both a mod
-### Next: v2.0.0 - Qualcomm Support (Q2 2025) 🚧
-- [ ] Qualcomm splash.img parser
-- [ ] Splash.img unpack/repack in both CLI and GUI
-- [ ] RLE compression/decompression
-- [ ] Auto-detect chipset type
-- [ ] Unified command interface
-- [ ] Cross-format conversion tools
-- [ ] Extended device database
-- [ ] GUI support for Qualcomm devices
+**BootMod** is a powerful cross-platform tool for customizing boot logos and splash screens on Android devices. Features both a modern Qt6 GUI and command-line interface supporting **MediaTek** and **Qualcomm Snapdragon** chipsets.
+
+### Current: v2.0.0 - Dual Chipset Support ✅
+- ✅ Qualcomm Snapdragon splash.img support (OPPO/OnePlus/Realme)
+- ✅ Splash.img unpack/repack in both CLI and GUI
+- ✅ Gzip compression/decompression for Snapdragon
+- ✅ Auto-detect chipset type (MTK vs Snapdragon)
+- ✅ Unified command interface for both formats
+- ✅ Format preservation (24-bit vs 32-bit BMP)
+- ✅ Alpha channel handling
+- ✅ GUI support for both chipsets
+
+### Next: v2.5.0 - Cross-Platform & Enhanced GUI (Q2 2025) 🚧
+- [ ] Windows native build (MSVC/MinGW)
+- [ ] macOS support (Intel + Apple Silicon)
+- [ ] **Enhanced GUI Features**
+  - Built-in image editor with cropping/resizing
+  - Undo/Redo support
+- [ ] ADB integration for direct device flashing
+- [ ] One-click backup/restore
+- [ ] Portable builds (AppImage, DMG, installer)
 
 ### v2.5.0 - Cross-Platform & Enhanced GUI (Q3 2025)
 - [ ] Windows native build (MSVC/MinGW)
@@ -35,7 +46,7 @@
 
 ## 🎯 Features
 
-### Current (v1.5.0)
+### Current (v2.0.0)
 
 #### 🎨 Modern Qt6 GUI
 - ✅ **Professional Interface** - Zilium-inspired dark theme UI
@@ -91,7 +102,7 @@
 - [ ] ADB integration for direct device flashing
 - [ ] One-click backup/restore
 
-#### Phase 3: Mobile & Advanced (v3.0.0)
+#### Phase 2: Mobile & Advanced (v3.0.0)
 - [ ] Android app (separate branch)
 - [ ] Root and non-root modes
 - [ ] Direct device flashing
@@ -103,7 +114,7 @@
 | Chipset | CLI Status | GUI Status | Format | Version |
 |---------|-----------|------------|--------|---------|
 | **MediaTek (MTK)** | ✅ Fully Supported | ✅ Fully Supported | logo.bin | v1.0+ |
-| **Qualcomm Snapdragon** | 🚧 In Development | 🚧 Planned | splash.img | v2.0+ |
+| **Qualcomm Snapdragon** | ✅ Fully Supported | ✅ Fully Supported | splash.img (OPPO/OnePlus) | v2.0+ |
 | Samsung Exynos | 📋 Planned | 📋 Planned | - | v3.0+ |
 
 ## 📋 Table of Contents
@@ -128,6 +139,8 @@ sudo apt-get install build-essential cmake zlib1g-dev libpng-dev
 
 # For GUI (additional)
 sudo apt-get install qt6-base-dev qt6-declarative-dev
+
+# Note: lodepng library is included in the repository (external/lodepng/)
 ```
 
 **Fedora/RHEL:**
@@ -156,11 +169,11 @@ sudo pacman -S qt6-base qt6-declarative
 git clone https://github.com/Badmaneers/BootMod.git
 cd bootmod
 
-# Build both CLI and GUI (default version 1.5.0)
+# Build both CLI and GUI (default version 2.0.0)
 ./build.sh
 
 # Or build with specific version
-./build.sh --version=1.6.0
+./build.sh --version=2.1.0
 
 # Build only CLI
 ./build.sh --cli-only
@@ -203,24 +216,35 @@ Launch the GUI application:
 
 #### Project-Based Workflow (Recommended)
 
-1. **Open a logo.bin file** - Click "Browse..." or drag & drop
+1. **Open a file** - Click "Browse..." or drag & drop logo.bin or splash.img
 2. **Create Project** - Click "Unpack to Project" and select an empty folder
-3. **Edit Logos** - Navigate to `project_folder/images/` and edit PNG files with your favorite editor
-4. **Replace in GUI** - Click "Replace" on any logo card, select your edited PNG
+   - Format is automatically detected (MTK or Snapdragon)
+   - All images extracted as PNG files
+3. **Edit Images** - Navigate to `project_folder/images/` and edit PNG files with your favorite editor
+   - MTK: `logo_N_WxH.png` format
+   - Snapdragon: `image_N.png` format
+   - IMPORTANT: Keep same dimensions
+4. **Replace in GUI** - Click "Replace" on any image card, select your edited PNG
    - The GUI validates dimensions automatically
    - Thumbnails update in real-time
-5. **Export** - Click "Export logo.bin" to create the flashable file
+5. **Export** - Click "Export to File" to create the flashable file
+   - MTK projects export to logo.bin
+   - Snapdragon projects export to splash.img
+   - Format is preserved from original file
 
 #### File Mode (Quick Export)
-- Open logo.bin directly to view and export individual logos
-- Export specific logos as PNG for inspection
-- Limited to read-only operations (no replace)
+- Open logo.bin or splash.img directly to view and export individual images
+- Export specific images as PNG for inspection
+- View image metadata (resolution, format, compression size)
 
 #### GUI Features
+- **Dual Format Support**: Seamlessly works with both MTK logo.bin and Snapdragon splash.img
+- **Format Auto-Detection**: Automatically detects chipset type when loading files
 - **Project Mode Indicator**: Shows whether you can edit (Project) or only view (File Mode)
-- **Logo Stats**: See resolution, format, and compressed size for each logo
+- **Image Stats**: See resolution, format, and compressed size for each image
 - **Status Messages**: Real-time feedback for all operations
 - **Native Dialogs**: Uses system file pickers for familiar UX
+- **File Filters**: Accept both .bin and .img extensions
 - **About Dialog**: View version, features, and developer info (click "About" in status bar)
 
 ### Command-Line Interface
@@ -241,17 +265,20 @@ bootmod unpack logo.bin output_dir/ --mode bgrabe --slots 1,2,69
 bootmod repack new_logo.bin output_dir/logo_*.png
 ```
 
-### Qualcomm Snapdragon Devices (Coming Soon)
+### Qualcomm Snapdragon Devices
 
 ```bash
-# Show information about splash.img
+# Show information about splash.img (OPPO/OnePlus/Realme)
 bootmod info splash.img
 
-# Unpack splash screen
+# Unpack all splash screens
 bootmod unpack splash.img output_dir/
 
-# Repack with custom logo
-bootmod repack new_splash.img custom_logo.png
+# Extract specific image as PNG
+bootmod extract splash.img 0 output.png
+
+# Replace single image
+bootmod replace splash.img 0 custom_logo.png new_splash.img
 ```
 
 ### Command Reference
@@ -278,9 +305,10 @@ bootmod unpack <file> <output_dir> [options]
 - `--raw` - Extract as raw compressed files
 - `--flip` - Flip orientation
 
-**Qualcomm Options (Coming Soon):**
-- `--format <format>` - Output format (png, bmp, raw)
-- `--resolution <WxH>` - Target resolution
+**Qualcomm Options:**
+- Automatically extracts all images as PNG
+- Preserves original BMP format (24-bit or 32-bit)
+- Handles 8-bit indexed, 24-bit RGB, and 32-bit BGRA formats
 
 #### `repack` - Rebuild Boot Image
 ```bash
@@ -421,32 +449,48 @@ fastboot flash splash new_splash.img
 +------------------------+
 ```
 
-### Qualcomm splash.img Format (Coming Soon)
+### Qualcomm splash.img Format (OPPO/OnePlus/Realme)
 
 ```
-+------------------------+
-| Header                 |
-|  - Magic: "SPLASH!!"   |
-|  - Image count         |
-+------------------------+
-| Image 1 metadata       |
-| Image 2 metadata       |
-+------------------------+
-| Image 1 data (RLE)     |
-| Image 2 data (RLE)     |
-+------------------------+
++---------------------------+
+| DDPH Header (optional)    |
+|  - Magic: 0x48504444      |
+|  - Offset: 0x0            |
++---------------------------+
+| OPPO_SPLASH Header        |
+|  - Magic: "SPLASH LOGO!"  |
+|  - Offset: 0x4000         |
+|  - Image count            |
+|  - Display width/height   |
++---------------------------+
+| Metadata Array (128 max)  |
+|  - Image offset           |
+|  - Compressed size        |
+|  - Uncompressed size      |
+|  - Image name (116 bytes) |
++---------------------------+
+| Compressed Images         |
+|  - Offset: 0x8000         |
+|  - Format: Gzip           |
+|  - Data: BMP (8/24/32-bit)|
++---------------------------+
 ```
+
+**Supported BMP Formats:**
+- 8-bit indexed color with palette
+- 24-bit RGB (BGR byte order)
+- 32-bit BGRA with alpha channel
 
 ## 🔧 Building from Source
 
 ### Using Unified Build Script (Recommended)
 
 ```bash
-# Build both CLI and GUI with default version (1.5.0)
+# Build both CLI and GUI with default version (2.0.0)
 ./build.sh
 
 # Build with custom version
-./build.sh --version=1.6.0
+./build.sh --version=2.1.0
 
 # Build only CLI tool
 ./build.sh --cli-only
@@ -481,7 +525,7 @@ make test           # Run tests
 ```bash
 cd gui
 mkdir build && cd build
-export BOOTMOD_VERSION="1.5.0"  # Optional: Set version
+export BOOTMOD_VERSION="2.0.0"  # Optional: Set version
 cmake ..
 make -j$(nproc)
 ```
@@ -504,11 +548,15 @@ make -j$(nproc)
 
 ## 🗺️ Roadmap
 
-### Current: v1.5.0 - GUI & Project Workflow ✅
+### Current: v2.0.0 - Dual Chipset Support ✅
+- [x] Qualcomm Snapdragon splash.img support
 - [x] Qt6-based GUI with modern dark theme
-- [x] Project-based workflow (unpack → edit → repack)
-- [x] Live thumbnail updates after logo replacement
-- [x] Native file dialogs for better UX
+- [x] Project-based workflow for both chipsets
+- [x] Format auto-detection and preservation
+- [x] Live thumbnail updates after image replacement
+- [x] Native file dialogs for both .bin and .img files
+- [x] Alpha channel handling for splash screens
+- [x] BMP format preservation (24-bit vs 32-bit)
 - [x] Drag & drop support
 - [x] Individual logo export/replace operations
 - [x] Real-time status feedback

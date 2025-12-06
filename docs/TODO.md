@@ -1,23 +1,26 @@
 # TODO List
 
-## 🔥 Critical Priority - Qualcomm Support (v2.0)
+## ✅ Completed - Qualcomm Support (v2.0.0)
 
 ### Qualcomm splash.img Implementation
-- [ ] Research splash.img file format
-- [ ] Collect sample files from various Snapdragon devices
-- [ ] Document header structure and magic numbers
-- [ ] Implement RLE decompression algorithm
-- [ ] Implement RLE compression algorithm
-- [ ] Create qualcomm_format.h header file
-- [ ] Create qualcomm_format.cpp implementation
-- [ ] Add splash.img detection to main code
-- [ ] Integrate with unpack command
-- [ ] Integrate with repack command
-- [ ] Test with Snapdragon 660/720G/855/888 devices
-- [ ] Verify round-trip lossless extraction
-- [ ] Add Qualcomm-specific tests
+- [x] Research splash.img file format
+- [x] Collect sample files from various Snapdragon devices
+- [x] Document header structure and magic numbers
+- [x] Implement gzip decompression algorithm
+- [x] Implement gzip compression algorithm
+- [x] Create splash.h header file
+- [x] Create splash.cpp implementation
+- [x] Add splash.img detection to main code
+- [x] Integrate with unpack command
+- [x] Integrate with replace command
+- [x] Test with Snapdragon devices (OPPO/OnePlus/Realme)
+- [x] Verify round-trip lossless extraction
+- [x] Add Qualcomm-specific CLI commands (extract, replace)
+- [x] GUI integration for splash.img files
+- [x] Format auto-detection (MTK vs Snapdragon)
+- [x] Project mode support for both formats
 
-## High Priority
+## 🔥 Critical Priority - Cross-Platform (v2.5.0)
 
 ### Core Functionality (MTK)
 - [ ] Add error recovery for corrupted logo.bin files
@@ -52,13 +55,13 @@
 - [ ] Support for animated boot logos (video)
 
 ### Cross-Platform
-- [ ] Windows build with MinGW/MSVC
-- [ ] macOS build and testing
-- [ ] Static binary releases
-- [ ] AppImage for Linux
-- [ ] Portable Windows exe
-- [ ] Homebrew formula for macOS
-- [ ] Chocolatey package for Windows
+- [ ] Windows build with MinGW/MSVC (moved to Critical)
+- [ ] macOS build and testing (moved to Critical)
+- [ ] Static binary releases (moved to Critical)
+- [ ] AppImage for Linux (moved to Critical)
+- [ ] Portable Windows exe (moved to Critical)
+- [ ] Homebrew formula for macOS (moved to Critical)
+- [ ] Chocolatey package for Windows (moved to Critical)
 
 ### Code Quality
 - [ ] Code coverage reports
@@ -149,7 +152,18 @@
 - [x] Smart aspect ratio detection
 - [x] Round-trip testing
 - [x] Basic error handling
+- [x] Qt6 GUI with project workflow (v1.5.0)
+- [x] Qualcomm Snapdragon splash.img support (v2.0.0)
+- [x] Format auto-detection (v2.0.0)
+- [x] lodepng integration (v2.0.0)
+- [x] Gzip compression/decompression (v2.0.0)
+- [x] BMP format support (8/24/32-bit) (v2.0.0)
+- [x] Alpha channel handling (v2.0.0)
+- [x] Format preservation (v2.0.0)
+- [x] Dual format GUI support (v2.0.0)
+- [x] Project mode for both formats (v2.0.0)
+- [x] Build script improvements (v2.0.0)
 
 ---
 
-*Last updated: 2025-12-05*
+*Last updated: 2025-12-06*
