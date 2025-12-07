@@ -852,6 +852,21 @@ ApplicationWindow {
     // Device Preview Dialog
     DevicePreviewDialog {
         id: devicePreviewDialog
+        
+        // Connect to bitmap editor signal to refresh thumbnails
+        onImageEdited: function(path) {
+            console.log("Main window: Image edited, refreshing thumbnails for:", path)
+            refreshThumbnails()
+        }
+    }
+    
+    // Function to refresh thumbnail cache
+    function refreshThumbnails() {
+        // Force the thumbnail provider to reload by rescanning project images
+        if (logoFile.isLoaded && logoFile.isProjectMode) {
+            console.log("Rescanning project images to refresh thumbnails")
+            logoFile.rescanProjectImages()
+        }
     }
     
     // Drag & Drop

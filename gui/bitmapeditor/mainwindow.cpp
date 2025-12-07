@@ -25,9 +25,13 @@ MainWindow::MainWindow(BitmapAppContext *context, QWidget *parent)
     this->context = context;
 
     /*****************************************************************************/
-    // zakladni inicializace UI
+    // Basic UI initialization
     this->ui->setupUi(this);
-    // setaveni toolbaru
+    
+    // Set window title for BootMod integration
+    this->setWindowTitle(tr("Logo Frame Editor - BootMod"));
+    
+    // Setup toolbar
     this->colorPicker = new ColorPicker(this->ui->toolBar);
     this->ui->toolBar->addWidget(this->colorPicker);
     this->ui->toolBar->addAction(this->ui->actionZoom_in);
@@ -38,13 +42,22 @@ MainWindow::MainWindow(BitmapAppContext *context, QWidget *parent)
     this->ui->toolBar->addAction(this->ui->actionBrush);
     this->ui->toolBar->addAction(this->ui->actionFill);
     this->ui->toolBar->addAction(this->ui->actionText);
-    //this->ui->toolBar->addAction(this->ui->actionCircle);
-    //this->ui->toolBar->addAction(this->ui->actionRectangle);
-    //this->ui->toolBar->addAction(this->ui->actionPolygon);
-    // label pro status bar
+    
+    // Hide/disable features not needed for logo editing
+    this->ui->actionNew_project->setVisible(false);
+    this->ui->actionOpen_project->setVisible(false);
+    this->ui->actionSave_project->setVisible(false);
+    this->ui->actionImport_image->setVisible(false);
+    this->ui->actionPrint->setVisible(false);
+    this->ui->actionAbout->setVisible(false);
+    
+    // Rename "Export" to "Export as PNG..."
+    this->ui->actionExport_image->setText(tr("Export as PNG..."));
+    
+    // Label for status bar
     this->statusLabel = new QLabel(this->ui->statusbar);
     this->statusLabel->setAlignment(Qt::AlignLeft);
-    this->statusLabel->setText(tr("Project: None"));
+    this->statusLabel->setText(tr("Logo Frame Editor"));
     this->statusBar()->addPermanentWidget(this->statusLabel, 1);
     /*****************************************************************************/
 
@@ -87,19 +100,8 @@ MainWindow::MainWindow(BitmapAppContext *context, QWidget *parent)
 
 
     /*****************************************************************************/
-    // inicializace oken
-    this->window_newProject = new NewProject(this->context);
-    this->window_openProject = new OpenProject(this->context);
-    this->window_importImage = new ImportImage(this->context);
+    // inicializace oken (only keep Export dialog for PNG export)
     this->window_exportProject = new ExportProject(this->context);
-
-    this->window_about = new About();
-
-    connect(this->window_newProject, SIGNAL(projectCreated()),
-            this, SLOT(updateStatusBar()));
-    connect(this->window_openProject, SIGNAL(projectOpened()),
-            this, SLOT(updateStatusBar()));
-
     /*****************************************************************************/
 
 
@@ -123,11 +125,8 @@ MainWindow::~MainWindow()
     if(this->splitter_horizontal) delete this->splitter_horizontal;
     if(this->statusLabel) delete this->statusLabel;
 
-    if(this->window_newProject) delete this->window_newProject;
-    if(this->window_openProject) delete this->window_openProject;
-    if(this->window_importImage) delete this->window_importImage;
+    // Only delete the one dialog we're keeping
     if(this->window_exportProject) delete this->window_exportProject;
-    if(this->window_about) delete this->window_about;
 }
 
 void MainWindow::showEvent(QShowEvent *event)
@@ -138,56 +137,20 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(
-                this,
-                tr("Exit"),
-                DIALOG_CLOSE_MSG,
-                QMessageBox::Yes|QMessageBox::No);
-
-    if(reply == QMessageBox::Yes) {
-        event->accept();
-    } else {
-        event->ignore();
-    }
+    // Simplified close - auto-saves via BitmapEditorWrapper event filter
+    // No confirmation needed since changes are saved automatically
+    event->accept();
 }
 
 void MainWindow::updateStatusBar()
 {
     Project *p = this->context->getProject();
     if(p == NULL) {
-        this->statusLabel->setText(tr("Project: None"));
+        this->statusLabel->setText(tr("Logo Frame Editor"));
     } else {
-        this->statusLabel->setText(QString(tr("Project: %1 (%2)")).arg(p->getName(), p->getPath()));
+        this->statusLabel->setText(QString(tr("Editing: %1x%2 Logo Frame")).arg(p->getSize().width()).arg(p->getSize().height()));
     }
 }
-
-void MainWindow::on_actionNew_project_triggered()
-{
-    this->window_newProject->show();
-}
-
-
-void MainWindow::on_actionOpen_project_triggered()
-{
-    this->window_openProject->show();
-}
-
-
-void MainWindow::on_actionSave_project_triggered()
-{
-    if(this->context == NULL) return;
-    if(this->context->getProject() == NULL) return;
-    WriteProjectToFile(this->context->getProject());
-    QMessageBox::information(this, tr("Project"), tr("Project saved successfully"));
-}
-
-
-void MainWindow::on_actionImport_image_triggered()
-{
-    this->window_importImage->show();
-}
-
 
 void MainWindow::on_actionExport_image_triggered()
 {
@@ -197,62 +160,9 @@ void MainWindow::on_actionExport_image_triggered()
 
 void MainWindow::on_actionExit_triggered()
 {
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(
-                this,
-                tr("Exit"),
-                DIALOG_CLOSE_MSG,
-                QMessageBox::Yes|QMessageBox::No);
-
-    if(reply == QMessageBox::Yes) {
-        this->close();
-    }
+    this->close();
 }
 
-
-void MainWindow::on_actionPrint_triggered()
-{
-    if(this->context == NULL) return;
-    if(this->context->getProject() == NULL) {
-        return;
-    }
-
-    QPrinter printer(QPrinter::HighResolution);
-    QPrintPreviewDialog printPreviewDialog(&printer, this);
-    connect(&printPreviewDialog, &QPrintPreviewDialog::paintRequested,
-            this, &MainWindow::printerPaint);
-    printPreviewDialog.exec();
-}
-
-void MainWindow::printerPaint(QPrinter *printer) {
-    if(printer == NULL) return;
-
-    Project *p = this->context->getProject();
-    if(p == NULL) {
-        return;
-    }
-
-    QPainter painter;
-    painter.begin(printer);
-
-    QPrinter::Unit unit = QPrinter::DevicePixel;
-    double xscale = printer->pageRect(unit).width() / double(p->getSize().width());
-    double yscale = printer->pageRect(unit).height() / double(p->getSize().height());
-    double scale = qMin(xscale, yscale);
-    painter.translate(printer->paperRect(unit).x() + printer->pageRect(unit).width()/2,
-                      printer->paperRect(unit).y() + printer->pageRect(unit).height()/2);
-    painter.scale(scale, scale);
-    painter.translate(-p->getSize().width()/2, -p->getSize().height()/2);
-
-    p->paintEvent(painter, true);
-    painter.end();
-}
-
-
-void MainWindow::on_actionAbout_triggered()
-{
-    this->window_about->show();
-}
 
 void MainWindow::on_actionEye_Dropper_triggered()
 {

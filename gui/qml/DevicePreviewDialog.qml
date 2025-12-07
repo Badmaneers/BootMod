@@ -18,6 +18,9 @@ ApplicationWindow {
     // Add property to track if window is open for drag and drop
     property bool opened: visible
     
+    // Signals to notify when images are edited
+    signal imageEdited(string path)
+    
     property int currentFrame: 1  // Start from frame 1 (logo_1)
     property int totalFrames: 0
     property bool isPlaying: false
@@ -57,6 +60,41 @@ ApplicationWindow {
     // Bitmap editor wrapper
     BitmapEditorWrapper {
         id: bitmapEditor
+        
+        onImageSaved: function(path) {
+            console.log("Bitmap editor saved image:", path)
+            // Force refresh of all layer images by triggering updateImage()
+            refreshAllLayers()
+            // Emit signal so Main.qml can also refresh
+            devicePreviewDialog.imageEdited(path)
+        }
+        
+        onEditorClosed: function() {
+            console.log("Bitmap editor closed")
+            // Also refresh when closed in case the save happened earlier
+            refreshAllLayers()
+        }
+    }
+    
+    // Function to refresh all layer images
+    function refreshAllLayers() {
+        console.log("Refreshing all layers...")
+        // Trigger updateImage for all layers
+        for (var i = 0; i < layersRepeater.count; i++) {
+            var layerItem = layersRepeater.itemAt(i)
+            if (layerItem && layerItem.layerData) {
+                var image = layerItem.children[1] // The Image is the second child (after Rectangle selection border)
+                if (image && image.updateImage) {
+                    // Force cache clear by appending timestamp
+                    var oldSource = image.source.toString()
+                    if (oldSource.indexOf("?") > -1) {
+                        oldSource = oldSource.substring(0, oldSource.indexOf("?"))
+                    }
+                    image.source = oldSource + "?" + Date.now()
+                    console.log("  Refreshed layer", i, "source:", image.source)
+                }
+            }
+        }
     }
     
     // Folder model to scan image files

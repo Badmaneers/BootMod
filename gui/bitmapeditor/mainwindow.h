@@ -7,16 +7,11 @@
 #include <QWidget>
 #include <QSplitter>
 #include <QLabel>
-#include <QPrinter>
 
 
 #include "base/bitmapappcontext.h"
 #include "utility/colorpicker.h"
-#include "newproject.h"
-#include "openproject.h"
-#include "importimage.h"
 #include "exportproject.h"
-#include "about.h"
 
 
 /**
@@ -42,37 +37,13 @@ protected:
     ColorPicker *colorPicker;
 
     // windows
-    NewProject *window_newProject;
-    OpenProject *window_openProject;
-    ImportImage *window_importImage;
     ExportProject *window_exportProject;
-    About *window_about;
 
     virtual void showEvent(QShowEvent *event) override;
 
     virtual void closeEvent (QCloseEvent *event) override;
 
 private slots:
-    /**
-     * @brief Otevre okno pro vytvoreni noveho projektu
-     */
-    void on_actionNew_project_triggered();
-
-    /**
-     * @brief Otevre file dialog pro otevreni existujiciho projektu
-     */
-    void on_actionOpen_project_triggered();
-
-    /**
-     * @brief Ulozi projekt na disk
-     */
-    void on_actionSave_project_triggered();
-
-    /**
-     * @brief Otevre file dialog pro importovani obrazku do projektu
-     */
-    void on_actionImport_image_triggered();
-
     /**
      * @brief Otevre okno pro exportovani obrazku
      */
@@ -82,22 +53,6 @@ private slots:
      * @brief Ukoncni aplikaci (pred ukonceni zobrazi dialog pro ulozeni projektu)
      */
     void on_actionExit_triggered();
-
-    /**
-     * @brief Otevre okno s nahledem tisku a moznosti tisku tohoto obrazku
-     */
-    void on_actionPrint_triggered();
-
-    /**
-     * @brief Printer paint event (pro print preview dialog)
-     * @param printer - QPrinter
-     */
-    void printerPaint(QPrinter *printer);
-
-    /**
-     * @brief Otevre okno s inforamacemi o teto aplikaci
-     */
-    void on_actionAbout_triggered();
 
     /**
      * @brief Vybera nastro "eye dropper"
