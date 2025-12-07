@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import Qt.labs.folderlistmodel
 import BootMod
 
@@ -25,8 +26,11 @@ ApplicationWindow {
     property int canvasHeight: 1280
     property real canvasScale: 1.0
     property var imageDimensions: ({}) // Map of frame number -> {width, height}
-    property int selectedLayerIndex: -1 // Currently selected layer on canvas
     property int userLayerCount: 0 // Count of user layers (excludes auto-animation)
+    property bool dimensionsReady: false  // Flag to prevent race condition
+    
+    // Use LayerManager's selectedLayerIndex instead of local property
+    property alias selectedLayerIndex: layerManager.selectedLayerIndex
     
     // Layer manager instance
     LayerManager {
@@ -57,6 +61,8 @@ ApplicationWindow {
                 // Trigger dimension scan when ready
                 if (devicePreviewDialog.visible) {
                     scanImageDimensions()
+                    dimensionsReady = true  // Mark as ready
+                    console.log("Image dimensions ready, count:", Object.keys(imageDimensions).length)
                 }
             }
         }
@@ -101,6 +107,9 @@ ApplicationWindow {
         currentFrame = startFrame >= 1 ? startFrame : 1
         totalFrames = logoFile.logoCount
         
+        // Reset dimensions ready flag
+        dimensionsReady = false
+        
         // Set up folder model to scan images
         if (logoFile.isProjectMode && logoFile.projectPath) {
             var imagesPath = logoFile.projectPath + "/images"
@@ -108,8 +117,14 @@ ApplicationWindow {
             console.log("Setting folder model to:", imagesPath)
         }
         
-        // Scan all image dimensions (will be called again when folder model is ready)
-        scanImageDimensions()
+        // Initial scan attempt (will be called again when folder model is ready)
+        if (imagesFolderModel.status === FolderListModel.Ready) {
+            scanImageDimensions()
+            dimensionsReady = true
+            console.log("Initial scan complete:", Object.keys(imageDimensions).length, "images")
+        } else {
+            console.log("Folder model not ready yet, will scan when ready")
+        }
         
         // Get the dimensions of the first logo for canvas sizing
         if (totalFrames > 0) {
@@ -150,6 +165,18 @@ ApplicationWindow {
     }
     
     function addLogoLayer(logoIndex) {
+        console.log("addLogoLayer called with logoIndex:", logoIndex)
+        
+        if (!logoFile.isProjectMode) {
+            console.log("Not in project mode, cannot add layer")
+            return
+        }
+        
+        if (logoIndex < 1 || logoIndex > totalFrames) {
+            console.log("Invalid logo index:", logoIndex, "totalFrames:", totalFrames)
+            return
+        }
+        
         var layer = layerManager.createLayer()
         layer.logoIndex = logoIndex
         layer.name = "Logo " + logoIndex
@@ -157,7 +184,17 @@ ApplicationWindow {
         layer.yPosition = 50
         layer.startFrame = 1
         layer.endFrame = totalFrames
+        layer.visible = true
+        layer.opacity = 1.0
+        
+        console.log("Created new layer:", layer.name, "at index:", layerManager.layerCount - 1)
+        
+        // Select the newly created layer
+        layerManager.selectedLayerIndex = layerManager.layerCount - 1
         layersList.currentIndex = layerManager.layerCount - 1
+        
+        // Save layers
+        saveLayers()
     }
     
     function play() {
@@ -341,45 +378,6 @@ ApplicationWindow {
                         }
                     }
                     
-                    // Drop area
-                    DropArea {
-                        anchors.fill: parent
-                        keys: ["logoIndex"]
-                        
-                        onEntered: (drag) => {
-                            console.log("Drag entered:", drag.keys, drag.hasText)
-                            canvasContainer.border.color = "#4a90e2"
-                            canvasContainer.border.width = 4
-                            drag.accept(Qt.CopyAction)
-                        }
-                        
-                        onExited: {
-                            console.log("Drag exited")
-                            canvasContainer.border.color = "#555555"
-                            canvasContainer.border.width = 2
-                        }
-                        
-                        onDropped: (drop) => {
-                            console.log("Drop received - hasText:", drop.hasText, "text:", drop.text, "keys:", drop.keys)
-                            canvasContainer.border.color = "#555555"
-                            canvasContainer.border.width = 2
-                            
-                            if (drop.hasText) {
-                                var logoIndex = parseInt(drop.text)
-                                console.log("Parsed logo index:", logoIndex, "totalFrames:", totalFrames)
-                                if (!isNaN(logoIndex) && logoIndex >= 1 && logoIndex <= totalFrames) {
-                                    console.log("Adding logo layer:", logoIndex)
-                                    addLogoLayer(logoIndex)
-                                    drop.accept(Qt.CopyAction)
-                                } else {
-                                    console.log("Invalid logo index")
-                                }
-                            } else {
-                                console.log("Drop has no text data")
-                            }
-                        }
-                    }
-                    
                     // Layer rendering
                     Repeater {
                         model: layerManager.layerCount
@@ -454,6 +452,13 @@ ApplicationWindow {
                                         return
                                     }
                                     
+                                    // Wait for dimensions to be ready to avoid race condition
+                                    if (!devicePreviewDialog.dimensionsReady && !layerItem.layerData.customImagePath) {
+                                        console.log("Layer", index, "- Dimensions not ready yet, will retry...")
+                                        Qt.callLater(updateImage)  // Retry on next event loop
+                                        return
+                                    }
+                                    
                                     // Check if this is a merged layer with custom image path
                                     if (layerItem.layerData.customImagePath && layerItem.layerData.customImagePath !== "") {
                                         console.log("Layer", index, "- Loading merged image:", layerItem.layerData.customImagePath)
@@ -481,7 +486,7 @@ ApplicationWindow {
                                     if (logoFile.isProjectMode && logoFile.projectPath) {
                                         var dims = imageDimensions[displayIndex]
                                         console.log("  Looking for dimensions for logo", displayIndex)
-                                        console.log("  imageDimensions:", JSON.stringify(imageDimensions))
+                                        console.log("  imageDimensions available:", Object.keys(imageDimensions).length, "entries")
                                         
                                         if (dims) {
                                             var imagePath = "file://" + logoFile.projectPath + "/images/logo_" + displayIndex + "_" + dims.width + "x" + dims.height + ".png"
@@ -1170,15 +1175,40 @@ ApplicationWindow {
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                                 Text {
-                                    text: "Add"
+                                    text: "Add Image Layer"
                                     color: "#ffffff"
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                             }
+                            ToolTip.visible: hovered
+                            ToolTip.text: "Add a custom image as a new layer"
+                            onClicked: {
+                                addCustomImageDialog.open()
+                            }
+                        }
+                        
+                        Button {
+                            contentItem: RowLayout {
+                                spacing: 5
+                                Image {
+                                    source: "qrc:/BootMod/res/icons/layers.svg"
+                                    width: 16
+                                    height: 16
+                                    sourceSize: Qt.size(16, 16)
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+                                Text {
+                                    text: "Add Logo Layer"
+                                    color: "#ffffff"
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+                            }
+                            ToolTip.visible: hovered
+                            ToolTip.text: "Add a layer from existing logos"
                             onClicked: {
                                 var layer = layerManager.createLayer()
                                 layer.logoIndex = currentFrame
-                                layer.name = "Layer " + currentFrame
+                                layer.name = "Logo " + currentFrame
                                 layer.xPosition = 50
                                 layer.yPosition = 50
                                 layer.startFrame = 1
@@ -1679,5 +1709,41 @@ ApplicationWindow {
     onClosing: {
         stop()
         saveLayers()
+    }
+    
+    // File dialog for adding custom images
+    FileDialog {
+        id: addCustomImageDialog
+        title: "Add Custom Image Layer"
+        nameFilters: ["Image files (*.png *.jpg *.jpeg *.bmp)", "All files (*)"]
+        fileMode: FileDialog.OpenFile
+        
+        onAccepted: {
+            var imagePath = selectedFile.toString()
+            // Remove file:// prefix
+            if (imagePath.startsWith("file://")) {
+                imagePath = imagePath.substring(7)
+            }
+            
+            console.log("Adding custom image layer from:", imagePath)
+            
+            // Create a new layer with the custom image
+            var layer = layerManager.createLayer()
+            layer.name = "Custom Image"
+            layer.logoIndex = 0  // 0 means custom image, not from logo.bin
+            layer.customImagePath = imagePath
+            layer.xPosition = 100
+            layer.yPosition = 100
+            layer.startFrame = 1
+            layer.endFrame = totalFrames
+            layer.visible = true
+            layer.opacity = 1.0
+            
+            // Select the new layer
+            layersList.currentIndex = layerManager.layerCount - 1
+            selectedLayerIndex = layerManager.layerCount - 1
+            
+            console.log("Created custom image layer:", layer.name, "path:", layer.customImagePath)
+        }
     }
 }  // End ApplicationWindow

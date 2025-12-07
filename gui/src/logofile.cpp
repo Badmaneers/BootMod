@@ -456,8 +456,7 @@ bool LogoFile::replaceLogo(int index, const QString &imagePath) {
             
         } else if (m_currentFormat == bootmod::FormatType::MTK_LOGO) {
             // Handle MediaTek logo.bin format
-        } else if (m_currentFormat == bootmod::FormatType::MTK_LOGO) {
-            // Handle MediaTek logo.bin format
+            qDebug() << "Replacing MTK logo...";
             uint32_t width, height;
             const LogoEntry& entry = m_logos[index - 1];
             ColorMode mode = (entry.format == "RGB565") ? ColorMode::RGB565_LE : ColorMode::BGRA_LE;
@@ -666,6 +665,37 @@ QString LogoFile::browseForImage() {
     );
     
     return path;
+}
+
+void LogoFile::browseAndExtractLogo(int index) {
+    QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    QString defaultFilename = QString("/logo_%1.png").arg(index);
+    
+    QString path = QFileDialog::getSaveFileName(
+        nullptr,
+        "Export Logo as PNG",
+        documentsPath + defaultFilename,
+        "PNG images (*.png);;All files (*)"
+    );
+    
+    if (!path.isEmpty()) {
+        extractLogo(index, path);
+    }
+}
+
+void LogoFile::browseAndReplaceLogo(int index) {
+    QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    
+    QString path = QFileDialog::getOpenFileName(
+        nullptr,
+        "Select PNG Image to Replace Logo",
+        documentsPath,
+        "PNG images (*.png);;All files (*)"
+    );
+    
+    if (!path.isEmpty()) {
+        replaceLogo(index, path);
+    }
 }
 
 QImage LogoFile::createThumbnail(const QImage &source, int maxSize) {

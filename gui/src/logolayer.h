@@ -94,12 +94,16 @@ private:
 class LayerManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(int layerCount READ layerCount NOTIFY layerCountChanged)
+    Q_PROPERTY(int selectedLayerIndex READ selectedLayerIndex WRITE setSelectedLayerIndex NOTIFY selectedLayerIndexChanged)
 
 public:
     explicit LayerManager(QObject *parent = nullptr);
     ~LayerManager();
     
     int layerCount() const { return m_layers.size(); }
+    
+    int selectedLayerIndex() const { return m_selectedLayerIndex; }
+    void setSelectedLayerIndex(int index);
     
     Q_INVOKABLE LogoLayer* createLayer();
     Q_INVOKABLE LogoLayer* getLayer(int index);
@@ -124,9 +128,11 @@ signals:
     void layerRemoved(int index);
     void layerMoved(int fromIndex, int toIndex);
     void layersChanged();
+    void selectedLayerIndexChanged();
 
 private:
     QList<LogoLayer*> m_layers;
+    int m_selectedLayerIndex = -1;
 };
 
 #endif // LOGOLAYER_H

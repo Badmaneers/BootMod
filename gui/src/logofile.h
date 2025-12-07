@@ -58,6 +58,10 @@ public:
     Q_INVOKABLE QString browseForFolder();
     Q_INVOKABLE QString browseForImage();
     
+    // Combined browse + action methods
+    Q_INVOKABLE void browseAndExtractLogo(int index);
+    Q_INVOKABLE void browseAndReplaceLogo(int index);
+    
     // Project-based workflow
     Q_INVOKABLE bool unpackToProject(const QString &logoPath, const QString &projectDir);
     Q_INVOKABLE bool openProject(const QString &projectDir);

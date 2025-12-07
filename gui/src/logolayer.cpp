@@ -194,25 +194,51 @@ LogoLayer* LayerManager::getLayer(int index) {
     return nullptr;
 }
 
-void LayerManager::removeLayer(int index) {
-    if (index >= 0 && index < m_layers.size()) {
-        LogoLayer *layer = m_layers.takeAt(index);
-        
-        // Check if this layer is linked to any other layer
-        // If so, we need to remove it from those linked lists before deleting
-        for (LogoLayer *otherLayer : m_layers) {
-            if (otherLayer) {
-                otherLayer->removeLinkedLayer(layer);
-            }
-        }
-        
-        delete layer;
-        
-        emit layerRemoved(index);
-        emit layerCountChanged();
-        // DON'T emit layersChanged() - let Repeater handle via layerCountChanged
+void LayerManager::setSelectedLayerIndex(int index) {
+    if (m_selectedLayerIndex != index) {
+        m_selectedLayerIndex = index;
+        emit selectedLayerIndexChanged();
     }
 }
+
+void LayerManager::removeLayer(int index) {
+    if (index < 0 || index >= m_layers.size()) {
+        qDebug() << "LayerManager::removeLayer - Invalid index:" << index;
+        return;
+    }
+    
+    LogoLayer *layer = m_layers.takeAt(index);
+    
+    // Check if this layer has linked layers - they should be children
+    // so they'll be deleted automatically, but we need to clear our list first
+    if (!layer->linkedLayers().isEmpty()) {
+        qDebug() << "LayerManager::removeLayer - Layer has" << layer->linkedLayers().size() << "linked layers";
+    }
+    
+    // Check if this layer is linked to any other layer
+    // If so, we need to remove it from those linked lists before deleting
+    for (LogoLayer *otherLayer : m_layers) {
+        if (otherLayer) {
+            otherLayer->removeLinkedLayer(layer);
+        }
+    }
+    
+    // Update selectedLayerIndex if needed
+    if (m_selectedLayerIndex == index) {
+        // If we deleted the selected layer, deselect
+        setSelectedLayerIndex(-1);
+    } else if (m_selectedLayerIndex > index) {
+        // If selected layer is after the deleted one, shift index down
+        setSelectedLayerIndex(m_selectedLayerIndex - 1);
+    }
+    
+    delete layer;
+    
+    emit layerRemoved(index);
+    emit layerCountChanged();
+    // DON'T emit layersChanged() - let Repeater handle via layerCountChanged
+}
+
 
 void LayerManager::moveLayer(int fromIndex, int toIndex) {
     if (fromIndex >= 0 && fromIndex < m_layers.size() &&

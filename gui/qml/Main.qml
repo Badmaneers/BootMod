@@ -63,38 +63,10 @@ ApplicationWindow {
     
     FileDialog {
         id: saveDialog
-        title: "Save Boot Logo File"
-        nameFilters: ["Boot Logo files (*.bin *.img)", "Logo.bin (*.bin)", "Splash.img (*.img)", "All files (*)"]
+        title: "Save Logo File"
+        nameFilters: ["Logo files (*.bin)", "All files (*)"]
         fileMode: FileDialog.SaveFile
         onAccepted: logoFile.saveFile(urlToPath(selectedFile))
-    }
-    
-    FileDialog {
-        id: replaceDialog
-        title: "Select PNG Image"
-        nameFilters: ["PNG images (*.png)"]
-        property int targetIndex: -1
-        onAccepted: {
-            if (targetIndex > 0) {
-                console.log("Replace: index=" + targetIndex + ", path=" + urlToPath(selectedFile))
-                logoFile.replaceLogo(targetIndex, urlToPath(selectedFile))
-            }
-        }
-    }
-    
-    FileDialog {
-        id: exportDialog
-        title: "Export Logo as PNG"
-        nameFilters: ["PNG images (*.png)"]
-        fileMode: FileDialog.SaveFile
-        defaultSuffix: "png"
-        property int targetIndex: -1
-        onAccepted: {
-            if (targetIndex > 0) {
-                console.log("Export: index=" + targetIndex + ", path=" + urlToPath(selectedFile))
-                logoFile.extractLogo(targetIndex, urlToPath(selectedFile))
-            }
-        }
     }
     
     // Project Dialogs (using native system dialogs)
@@ -615,28 +587,6 @@ ApplicationWindow {
                             border.width: 1
                             radius: root.radius
                             
-                            Drag.active: mouseArea.drag.active
-                            Drag.hotSpot.x: width / 2
-                            Drag.hotSpot.y: height / 2
-                            Drag.mimeData: { "text/plain": logoIndex.toString() }
-                            Drag.keys: ["logoIndex"]
-                            Drag.supportedActions: Qt.CopyAction
-                            
-                            states: [
-                                State {
-                                    when: mouseArea.drag.active
-                                    ParentChange {
-                                        target: logoCard
-                                        parent: root
-                                    }
-                                    AnchorChanges {
-                                        target: logoCard
-                                        anchors.horizontalCenter: undefined
-                                        anchors.verticalCenter: undefined
-                                    }
-                                }
-                            ]
-                            
                             ColumnLayout {
                                 anchors.fill: parent
                                 anchors.margins: root.spacing
@@ -695,10 +645,7 @@ ApplicationWindow {
                                         text: "Export"
                                         font.pixelSize: 11
                                         
-                                        onClicked: {
-                                            exportImageDialog.logoIndex = logoIndex
-                                            exportImageDialog.open()
-                                        }
+                                        onClicked: logoFile.browseAndExtractLogo(logoIndex)
                                         
                                         background: Rectangle {
                                             implicitHeight: 28
@@ -723,12 +670,7 @@ ApplicationWindow {
                                         font.pixelSize: 11
                                         enabled: logoFile.isProjectMode
                                         
-                                        onClicked: {
-                                            var path = logoFile.browseForImage()
-                                            if (path !== "") {
-                                                logoFile.replaceLogo(logoIndex, path)
-                                            }
-                                        }
+                                        onClicked: logoFile.browseAndReplaceLogo(logoIndex)
                                         
                                         background: Rectangle {
                                             implicitHeight: 28
@@ -758,14 +700,7 @@ ApplicationWindow {
                                 id: mouseArea
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                acceptedButtons: Qt.LeftButton
-                                
-                                drag.target: logoFile.isProjectMode && devicePreviewDialog.opened ? logoCard : null
-                                drag.axis: Drag.XAndYAxis
-                                
-                                onReleased: {
-                                    logoCard.Drag.drop()
-                                }
+                                acceptedButtons: Qt.NoButton  // Don't capture any mouse clicks
                             }
                         }
                     }
@@ -906,25 +841,6 @@ ApplicationWindow {
                     color: root.textSecondaryColor
                 }
             }
-        }
-    }
-    
-    // Export Individual Image Dialog
-    FileDialog {
-        id: exportImageDialog
-        title: "Export Image"
-        fileMode: FileDialog.SaveFile
-        nameFilters: ["PNG Images (*.png)"]
-        defaultSuffix: "png"
-        
-        property int logoIndex: 1
-        
-        onAccepted: {
-            var path = selectedFile.toString()
-            if (path.startsWith("file://")) {
-                path = path.substring(7)
-            }
-            logoFile.extractLogo(logoIndex, path)
         }
     }
     
