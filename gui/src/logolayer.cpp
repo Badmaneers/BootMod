@@ -194,6 +194,31 @@ LogoLayer* LayerManager::getLayer(int index) {
     return nullptr;
 }
 
+void LayerManager::addLayer(LogoLayer* layer) {
+    if (!layer) return;
+    
+    layer->setParent(this);
+    m_layers.append(layer);
+    
+    emit layerAdded(layer);
+    emit layerCountChanged();
+}
+
+void LayerManager::insertLayer(int index, LogoLayer* layer) {
+    if (!layer) return;
+    
+    layer->setParent(this);
+    
+    if (index < 0 || index >= m_layers.size()) {
+        m_layers.append(layer);
+    } else {
+        m_layers.insert(index, layer);
+    }
+    
+    emit layerAdded(layer);
+    emit layerCountChanged();
+}
+
 void LayerManager::setSelectedLayerIndex(int index) {
     if (m_selectedLayerIndex != index) {
         m_selectedLayerIndex = index;
@@ -237,6 +262,37 @@ void LayerManager::removeLayer(int index) {
     emit layerRemoved(index);
     emit layerCountChanged();
     // DON'T emit layersChanged() - let Repeater handle via layerCountChanged
+}
+
+LogoLayer* LayerManager::takeLayer(int index) {
+    if (index < 0 || index >= m_layers.size()) {
+        qDebug() << "LayerManager::takeLayer - Invalid index:" << index;
+        return nullptr;
+    }
+    
+    LogoLayer *layer = m_layers.takeAt(index);
+    
+    // Check if this layer is linked to any other layer
+    // If so, we need to remove it from those linked lists
+    for (LogoLayer *otherLayer : m_layers) {
+        if (otherLayer) {
+            otherLayer->removeLinkedLayer(layer);
+        }
+    }
+    
+    // Update selectedLayerIndex if needed
+    if (m_selectedLayerIndex == index) {
+        // If we removed the selected layer, deselect
+        setSelectedLayerIndex(-1);
+    } else if (m_selectedLayerIndex > index) {
+        // If selected layer is after the removed one, shift index down
+        setSelectedLayerIndex(m_selectedLayerIndex - 1);
+    }
+    
+    // Return the layer WITHOUT deleting it - caller takes ownership
+    emit layerRemoved(index);
+    emit layerCountChanged();
+    return layer;
 }
 
 

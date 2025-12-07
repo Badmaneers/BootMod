@@ -37,6 +37,7 @@ set(SOURCES
     src/thumbnailprovider.cpp
     src/appcontext.cpp
     src/logolayer.cpp
+    src/commandmanager.cpp
     ../src/bootmod.cpp
     ../src/bootmod_png.cpp
     ../src/splash.cpp
@@ -48,6 +49,7 @@ set(HEADERS
     src/thumbnailprovider.h
     src/appcontext.h
     src/logolayer.h
+    src/commandmanager.h
     ../include/bootmod.h
     ../include/splash.h
 )

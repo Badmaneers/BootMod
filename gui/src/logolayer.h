@@ -107,7 +107,10 @@ public:
     
     Q_INVOKABLE LogoLayer* createLayer();
     Q_INVOKABLE LogoLayer* getLayer(int index);
+    Q_INVOKABLE void addLayer(LogoLayer* layer);
+    Q_INVOKABLE void insertLayer(int index, LogoLayer* layer);
     Q_INVOKABLE void removeLayer(int index);
+    Q_INVOKABLE LogoLayer* takeLayer(int index);  // Remove without deleting
     Q_INVOKABLE void moveLayer(int fromIndex, int toIndex);
     Q_INVOKABLE void clearLayers();
     

@@ -49,6 +49,11 @@ ApplicationWindow {
         }
     }
     
+    // Command manager for undo/redo
+    CommandManager {
+        id: commandManager
+    }
+    
     // Folder model to scan image files
     FolderListModel {
         id: imagesFolderModel
@@ -607,12 +612,19 @@ ApplicationWindow {
                                 cursorShape: Qt.OpenHandCursor
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                                 
+                                property point dragStartPos: Qt.point(0, 0)
+                                
                                 onPressed: (mouse) => {
                                     if (mouse.button === Qt.LeftButton) {
                                         cursorShape = Qt.ClosedHandCursor
                                         layerItem.isDragging = true
                                         selectedLayerIndex = index
                                         layersList.currentIndex = index
+                                        
+                                        // Store starting position for undo
+                                        if (layerData) {
+                                            dragStartPos = Qt.point(layerData.xPosition, layerData.yPosition)
+                                        }
                                     }
                                 }
                                 
@@ -635,8 +647,16 @@ ApplicationWindow {
                                             layerItem.storedY = Math.max(0, Math.min(layerItem.storedY, (canvasHeight * canvasScale) - layerItem.height))
                                             
                                             // Save final unscaled position
-                                            layerData.xPosition = Math.round(layerItem.storedX / canvasScale)
-                                            layerData.yPosition = Math.round(layerItem.storedY / canvasScale)
+                                            var newX = Math.round(layerItem.storedX / canvasScale)
+                                            var newY = Math.round(layerItem.storedY / canvasScale)
+                                            layerData.xPosition = newX
+                                            layerData.yPosition = newY
+                                            
+                                            // Create undo command if position changed
+                                            var newPos = Qt.point(newX, newY)
+                                            if (dragStartPos.x !== newPos.x || dragStartPos.y !== newPos.y) {
+                                                commandManager.executeMoveCommand(layerManager, index, dragStartPos, newPos)
+                                            }
                                         }
                                         layerItem.isDragging = false
                                     }
@@ -795,7 +815,10 @@ ApplicationWindow {
                                     enabled: !layerContextMenu.isAutoAnimation
                                     onTriggered: {
                                         console.log("Deleting layer at index:", index)
-                                        layerManager.removeLayer(index)
+                                        var layer = layerManager.getLayer(index)
+                                        if (layer) {
+                                            commandManager.executeRemoveCommand(layerManager, index, layer)
+                                        }
                                     }
                                 }
                             }
@@ -1215,8 +1238,13 @@ ApplicationWindow {
                                 layer.endFrame = totalFrames
                                 layer.visible = true
                                 console.log("Created layer:", layer.name, "logoIndex:", layer.logoIndex, "endFrame:", layer.endFrame)
-                                layersList.currentIndex = layerManager.layerCount - 1
-                                selectedLayerIndex = layerManager.layerCount - 1
+                                
+                                var newIndex = layerManager.layerCount - 1
+                                layersList.currentIndex = newIndex
+                                selectedLayerIndex = newIndex
+                                
+                                // Add to undo stack
+                                commandManager.executeAddCommand(layerManager, newIndex, layer)
                             }
                         }
                         
@@ -1247,7 +1275,7 @@ ApplicationWindow {
                                     var layer = layerManager.getLayer(layersList.currentIndex)
                                     // Double-check it's not auto-animation
                                     if (layer && layer.endFrame !== -1) {
-                                        layerManager.removeLayer(layersList.currentIndex)
+                                        commandManager.executeRemoveCommand(layerManager, layersList.currentIndex, layer)
                                     }
                                 }
                             }
@@ -1577,9 +1605,35 @@ ApplicationWindow {
                             from: -2000
                             to: 4000
                             value: parent.parent.parent.parent.currentLayer ? parent.parent.parent.parent.currentLayer.xPosition : 0
+                            editable: true
+                            
+                            property int previousValue: 0
+                            
+                            onValueChanged: {
+                                // Track previous value
+                                if (parent.parent.parent.parent.currentLayer) {
+                                    previousValue = parent.parent.parent.parent.currentLayer.xPosition
+                                }
+                            }
+                            
                             onValueModified: {
                                 if (parent.parent.parent.parent.currentLayer) {
+                                    var oldX = previousValue
+                                    var newX = value
+                                    var y = parent.parent.parent.parent.currentLayer.yPosition
+                                    
+                                    // Update the actual value
                                     parent.parent.parent.parent.currentLayer.xPosition = value
+                                    
+                                    // Create undo command
+                                    if (oldX !== newX) {
+                                        commandManager.executeMoveCommand(
+                                            layerManager, 
+                                            selectedLayerIndex, 
+                                            Qt.point(oldX, y), 
+                                            Qt.point(newX, y)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1590,9 +1644,35 @@ ApplicationWindow {
                             from: -2000
                             to: 4000
                             value: parent.parent.parent.parent.currentLayer ? parent.parent.parent.parent.currentLayer.yPosition : 0
+                            editable: true
+                            
+                            property int previousValue: 0
+                            
+                            onValueChanged: {
+                                // Track previous value
+                                if (parent.parent.parent.parent.currentLayer) {
+                                    previousValue = parent.parent.parent.parent.currentLayer.yPosition
+                                }
+                            }
+                            
                             onValueModified: {
                                 if (parent.parent.parent.parent.currentLayer) {
+                                    var x = parent.parent.parent.parent.currentLayer.xPosition
+                                    var oldY = previousValue
+                                    var newY = value
+                                    
+                                    // Update the actual value
                                     parent.parent.parent.parent.currentLayer.yPosition = value
+                                    
+                                    // Create undo command
+                                    if (oldY !== newY) {
+                                        commandManager.executeMoveCommand(
+                                            layerManager, 
+                                            selectedLayerIndex, 
+                                            Qt.point(x, oldY), 
+                                            Qt.point(x, newY)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1614,6 +1694,26 @@ ApplicationWindow {
                             to: 1.0
                             value: parent.parent.parent.parent.currentLayer ? parent.parent.parent.parent.currentLayer.opacity : 1.0
                             stepSize: 0.05
+                            
+                            property real startOpacity: 1.0
+                            
+                            onPressedChanged: {
+                                if (pressed) {
+                                    // Store starting opacity for undo
+                                    startOpacity = value
+                                } else {
+                                    // Create undo command when released if value changed
+                                    if (parent.parent.parent.parent.currentLayer && Math.abs(value - startOpacity) > 0.001) {
+                                        commandManager.executeOpacityCommand(
+                                            layerManager,
+                                            selectedLayerIndex,
+                                            startOpacity,
+                                            value
+                                        )
+                                    }
+                                }
+                            }
+                            
                             onMoved: {
                                 if (parent.parent.parent.parent.currentLayer) {
                                     parent.parent.parent.parent.currentLayer.opacity = value
@@ -1693,6 +1793,31 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.margins: 5
             
+            // Undo/Redo buttons
+            Button {
+                text: "↶ Undo"
+                enabled: commandManager.canUndo
+                ToolTip.text: commandManager.canUndo ? commandManager.undoText : "Nothing to undo"
+                ToolTip.visible: hovered
+                onClicked: commandManager.undo()
+            }
+            
+            Button {
+                text: "↷ Redo"
+                enabled: commandManager.canRedo
+                ToolTip.text: commandManager.canRedo ? commandManager.redoText : "Nothing to redo"
+                ToolTip.visible: hovered
+                onClicked: commandManager.redo()
+            }
+            
+            Rectangle {
+                width: 1
+                height: parent.height * 0.6
+                color: "#cccccc"
+                Layout.leftMargin: 5
+                Layout.rightMargin: 5
+            }
+            
             Item { Layout.fillWidth: true }
             
             Button {
@@ -1704,6 +1829,25 @@ ApplicationWindow {
                 }
             }
         }
+    }
+    
+    // Keyboard shortcuts for undo/redo
+    Shortcut {
+        sequence: "Ctrl+Z"
+        enabled: commandManager.canUndo
+        onActivated: commandManager.undo()
+    }
+    
+    Shortcut {
+        sequence: "Ctrl+Shift+Z"
+        enabled: commandManager.canRedo
+        onActivated: commandManager.redo()
+    }
+    
+    Shortcut {
+        sequence: "Ctrl+Y"
+        enabled: commandManager.canRedo
+        onActivated: commandManager.redo()
     }
     
     onClosing: {
@@ -1740,8 +1884,12 @@ ApplicationWindow {
             layer.opacity = 1.0
             
             // Select the new layer
-            layersList.currentIndex = layerManager.layerCount - 1
-            selectedLayerIndex = layerManager.layerCount - 1
+            var newIndex = layerManager.layerCount - 1
+            layersList.currentIndex = newIndex
+            selectedLayerIndex = newIndex
+            
+            // Add to undo stack
+            commandManager.executeAddCommand(layerManager, newIndex, layer)
             
             console.log("Created custom image layer:", layer.name, "path:", layer.customImagePath)
         }
