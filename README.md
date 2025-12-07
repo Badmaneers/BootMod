@@ -49,18 +49,28 @@
 ### Current (v2.0.0)
 
 #### 🎨 Modern Qt6 GUI
-- ✅ **Professional Interface** - Zilium-inspired dark theme UI
+- ✅ **Professional Interface** - Zilium-inspired dark theme UI with SVG icons
 - ✅ **Project-Based Workflow** - Unpack, edit, and repack in one place
   - Create projects from logo.bin files
   - Edit logos directly in project folder
   - Live thumbnail updates after replacement
   - Export modified project to logo.bin
+- ✅ **Device Preview** (MediaTek only, experimental)
+  - Separate window for multi-layer boot animation preview
+  - Playback controls for animation testing
+  - Cross-window drag-and-drop support
+  - ⚠️ Has known bugs, under active development
+- ✅ **Modern UI Elements**
+  - Professional SVG iconography (33 icons)
+  - Linked layer system for non-destructive merging
+  - Native file dialogs and drag & drop support
 - ✅ **Native File Dialogs** - System-native file pickers for better UX
 - ✅ **Drag & Drop Support** - Easy file loading
 - ✅ **Real-time Preview** - See logo changes instantly
 - ✅ **Individual Logo Operations**
   - Extract any logo as PNG
   - Replace logos with validation
+  - Merge layers without file compositing (linked layers)
   - View resolution and format info
 - ✅ **Status Feedback** - Clear success/error messages
 - ✅ **Project Mode Indicator** - Know when logos can be edited

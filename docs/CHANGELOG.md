@@ -7,12 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Device Preview & UI Enhancements
+- **Linked Layer System**
+  - Merge layers without file-based compositing
+  - Parent-child relationship prevents premature deletion
+  - Maintains layer references in linkedLayers property
+- **SVG Icon Integration**
+  - Replaced all emoji icons with 33 professional SVG icons
+  - Icons: add, arrows (down/left/right/up), chart, close, delete, download, eye/eye-off, file, folder/folder-open, heart, layers, link, merge-down, move, package, play/pause/stop, skip-back/skip-forward, save, phone, sparkles, telegram, upload, user
+  - Proper icon containment with fixed dimensions (24x24)
+  - PreserveAspectFit scaling for consistent rendering
+- **Device Preview Window**
+  - Converted from Dialog to separate ApplicationWindow
+  - Enables cross-window drag-and-drop between main window and preview
+  - Multi-layer boot animation preview with playback controls
+  - Disabled for Snapdragon format (MediaTek only)
+  - Fixed layout issues with proper content anchoring
+  - ⚠️ **Known Issues**: Device Preview has bugs and will be developed further
+- **Snapdragon Project Loading Fixes**
+  - Enhanced file search algorithm for splash.img
+  - Searches in absolute path, relative to project, and parent directory
+  - Improved error handling for missing files
+- **Build System**
+  - Added C++17 filesystem support with -lstdc++fs flag to Makefile
+  - Fixed linking errors for experimental filesystem library
+
 ### Planned for v2.5.0
 - Windows native build
 - macOS support (Intel + Apple Silicon)
 - Qt6-based GUI enhancements
   - Built-in image editor with cropping/resizing
   - Theme customization (Light/Dark/Custom)
+  - Device Preview improvements and bug fixes
 - ADB integration for direct device flashing
 - One-click device backup/restore
 - Portable builds (AppImage, DMG, installer)

@@ -1,5 +1,17 @@
 # TODO List
 
+## ✅ Completed - GUI Enhancements (v2.1.0)
+
+### Device Preview & Layer System
+- [x] Implement linked layer system (non-destructive merging)
+- [x] Replace all emoji icons with professional SVG icons (33 total)
+- [x] Convert Device Preview from Dialog to separate Window
+- [x] Add cross-window drag-and-drop support
+- [x] Disable Device Preview for Snapdragon format
+- [x] Fix Snapdragon project loading with enhanced file search
+- [x] Fix Device Preview window layout and icon containment
+- [x] Add C++17 filesystem support to build system
+
 ## ✅ Completed - Qualcomm Support (v2.0.0)
 
 ### Qualcomm splash.img Implementation
@@ -74,15 +86,19 @@
 ## Low Priority (Future)
 
 ### GUI (Main Branch)
-- [ ] Qt-based GUI framework
-- [ ] Drag-and-drop support
-- [ ] Visual logo preview
+- [x] Qt-based GUI framework
+- [x] Drag-and-drop support
+- [x] Visual logo preview
+- [x] Linked layer system (non-destructive merge)
+- [x] Device Preview window (experimental, has bugs)
+- [x] Professional SVG icon set
 - [ ] Built-in image editor
 - [ ] ADB integration
 - [ ] Device auto-detection
 - [ ] One-click flash
 - [ ] Logo templates library
-- [ ] Animation preview
+- [ ] Animation preview improvements
+- [ ] Device Preview bug fixes and enhancements
 - [ ] Community logo marketplace
 
 ### Android App (Separate Branch)
