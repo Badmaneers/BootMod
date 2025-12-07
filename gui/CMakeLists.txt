@@ -36,6 +36,7 @@ set(SOURCES
     src/logolistmodel.cpp
     src/thumbnailprovider.cpp
     src/appcontext.cpp
+    src/logolayer.cpp
     ../src/bootmod.cpp
     ../src/bootmod_png.cpp
     ../src/splash.cpp
@@ -46,6 +47,7 @@ set(HEADERS
     src/logolistmodel.h
     src/thumbnailprovider.h
     src/appcontext.h
+    src/logolayer.h
     ../include/bootmod.h
     ../include/splash.h
 )
@@ -54,11 +56,43 @@ set(HEADERS
 set(QML_FILES
     qml/Main.qml
     qml/AboutDialog.qml
+    qml/DevicePreviewDialog.qml
 )
 
 # Resource files
 set(RESOURCE_FILES
     res/bootmod_logo.svg
+    res/icons/play.svg
+    res/icons/pause.svg
+    res/icons/stop.svg
+    res/icons/skip-back.svg
+    res/icons/skip-forward.svg
+    res/icons/layers.svg
+    res/icons/add.svg
+    res/icons/delete.svg
+    res/icons/move.svg
+    res/icons/eye.svg
+    res/icons/eye-off.svg
+    res/icons/save.svg
+    res/icons/merge-down.svg
+    res/icons/phone.svg
+    res/icons/chart.svg
+    res/icons/package.svg
+    res/icons/folder.svg
+    res/icons/folder-open.svg
+    res/icons/file.svg
+    res/icons/link.svg
+    res/icons/telegram.svg
+    res/icons/heart.svg
+    res/icons/sparkles.svg
+    res/icons/user.svg
+    res/icons/upload.svg
+    res/icons/download.svg
+    res/icons/close.svg
+    res/icons/arrow-up.svg
+    res/icons/arrow-down.svg
+    res/icons/arrow-left.svg
+    res/icons/arrow-right.svg
 )
 
 # Create executable

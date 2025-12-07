@@ -10,11 +10,22 @@ find_package(PNG REQUIRED)
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/lodepng)
+
+# Add lodepng library
+add_library(lodepng STATIC
+    external/lodepng/lodepng.cpp
+)
+
+target_include_directories(lodepng PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/lodepng
+)
 
 # Source files
 set(SOURCES
     src/bootmod.cpp
     src/bootmod_png.cpp
+    src/splash.cpp
     src/main.cpp
 )
 
@@ -35,8 +46,10 @@ target_include_directories(bootmod PRIVATE
 
 # Link libraries
 target_link_libraries(bootmod
+    lodepng
     ${PNG_LIBRARIES}
     ${ZLIB_LIBRARIES}
+    stdc++fs
 )
 
 # Compiler flags

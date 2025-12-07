@@ -7,7 +7,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -Iinclude -Iexternal/lodepng -DVERSION=\"$(VERSION)\"
 
 # Libraries
-LIBS = -lz -lpng
+LIBS = -lz -lpng -lstdc++fs
 
 # Directories
 SRC_DIR = src

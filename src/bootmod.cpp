@@ -41,6 +41,9 @@ FormatType detectFormat(const std::string& filename) {
 
 namespace mtklogo {
 
+// Define static constexpr member
+constexpr uint8_t MtkHeader::FILL;
+
 // Helper: Read uint32 in Little Endian
 static uint32_t readU32LE(const uint8_t* data) {
     return data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);

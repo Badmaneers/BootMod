@@ -6,6 +6,7 @@
 #include "logolistmodel.h"
 #include "thumbnailprovider.h"
 #include "appcontext.h"
+#include "logolayer.h"
 
 #ifndef BOOTMOD_VERSION
 #define BOOTMOD_VERSION "1.6.0"
@@ -25,6 +26,8 @@ int main(int argc, char *argv[]) {
     // Register types
     qmlRegisterType<LogoFile>("BootMod", 1, 0, "LogoFile");
     qmlRegisterType<LogoListModel>("BootMod", 1, 0, "LogoListModel");
+    qmlRegisterType<LogoLayer>("BootMod", 1, 0, "LogoLayer");
+    qmlRegisterType<LayerManager>("BootMod", 1, 0, "LayerManager");
     
     QQmlApplicationEngine engine;
     

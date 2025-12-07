@@ -390,6 +390,32 @@ ApplicationWindow {
                                 }
                             }
                             
+                            Button {
+                                text: "Device Preview"
+                                enabled: logoFile.isProjectMode && logoFile.logoCount > 0 && logoFile.formatType === "MediaTek"
+                                Layout.preferredWidth: 130
+                                Layout.preferredHeight: 32
+                                onClicked: devicePreviewDialog.startPreview(1)  // Start from frame 1
+                                
+                                background: Rectangle {
+                                    implicitWidth: 130
+                                    implicitHeight: 32
+                                    color: parent.enabled ? (parent.hovered ? "#3d4f7d" : "#2d3f5f") : root.surfaceColor
+                                    border.color: parent.enabled ? "#4a90e2" : root.borderColor
+                                    border.width: 1
+                                    radius: root.radius / 2
+                                    opacity: parent.enabled ? 1.0 : 0.5
+                                }
+                                
+                                contentItem: Text {
+                                    text: parent.text
+                                    font.pixelSize: 12
+                                    color: parent.enabled ? "#4a90e2" : root.textSecondaryColor
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                            }
+                            
                             Item { Layout.fillWidth: true }
                             
                             Button {
@@ -451,10 +477,12 @@ ApplicationWindow {
                                 radius: 16
                                 color: root.accentColor
                                 
-                                Text {
+                                Image {
                                     anchors.centerIn: parent
-                                    text: "📊"
-                                    font.pixelSize: 16
+                                    source: "qrc:/BootMod/res/icons/chart.svg"
+                                    width: 16
+                                    height: 16
+                                    sourceSize: Qt.size(16, 16)
                                 }
                             }
                             
@@ -540,11 +568,24 @@ ApplicationWindow {
                                 Layout.maximumWidth: 250
                             }
                             
-                            Text {
-                                text: logoFile.isProjectMode ? "📁 Project Folder" : "📄 Binary File"
-                                font.pixelSize: 10
-                                color: root.textSecondaryColor
+                            RowLayout {
+                                spacing: 5
                                 Layout.alignment: Qt.AlignRight
+                                
+                                Image {
+                                    source: logoFile.isProjectMode ? "qrc:/BootMod/res/icons/folder.svg" : "qrc:/BootMod/res/icons/file.svg"
+                                    width: 10
+                                    height: 10
+                                    sourceSize: Qt.size(10, 10)
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+                                
+                                Text {
+                                    text: logoFile.isProjectMode ? "Project Folder" : "Binary File"
+                                    font.pixelSize: 10
+                                    color: root.textSecondaryColor
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
                             }
                         }
                     }
@@ -566,12 +607,35 @@ ApplicationWindow {
                         model: logoModel
                         
                         delegate: Rectangle {
+                            id: logoCard
                             width: gridView.cellWidth - root.spacing
                             height: gridView.cellHeight - root.spacing
                             color: mouseArea.containsMouse ? "#2d2d30" : root.surfaceColor
                             border.color: root.borderColor
                             border.width: 1
                             radius: root.radius
+                            
+                            Drag.active: mouseArea.drag.active
+                            Drag.hotSpot.x: width / 2
+                            Drag.hotSpot.y: height / 2
+                            Drag.mimeData: { "text/plain": logoIndex.toString() }
+                            Drag.keys: ["logoIndex"]
+                            Drag.supportedActions: Qt.CopyAction
+                            
+                            states: [
+                                State {
+                                    when: mouseArea.drag.active
+                                    ParentChange {
+                                        target: logoCard
+                                        parent: root
+                                    }
+                                    AnchorChanges {
+                                        target: logoCard
+                                        anchors.horizontalCenter: undefined
+                                        anchors.verticalCenter: undefined
+                                    }
+                                }
+                            ]
                             
                             ColumnLayout {
                                 anchors.fill: parent
@@ -694,7 +758,14 @@ ApplicationWindow {
                                 id: mouseArea
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                acceptedButtons: Qt.NoButton
+                                acceptedButtons: Qt.LeftButton
+                                
+                                drag.target: logoFile.isProjectMode && devicePreviewDialog.opened ? logoCard : null
+                                drag.axis: Drag.XAndYAxis
+                                
+                                onReleased: {
+                                    logoCard.Drag.drop()
+                                }
                             }
                         }
                     }
@@ -720,10 +791,12 @@ ApplicationWindow {
                             border.color: root.borderColor
                             border.width: 2
                             
-                            Text {
+                            Image {
                                 anchors.centerIn: parent
-                                text: "📦"
-                                font.pixelSize: 64
+                                source: "qrc:/BootMod/res/icons/package.svg"
+                                width: 64
+                                height: 64
+                                sourceSize: Qt.size(64, 64)
                             }
                         }
                         
@@ -858,6 +931,11 @@ ApplicationWindow {
     // About Dialog
     AboutDialog {
         id: aboutDialog
+    }
+    
+    // Device Preview Dialog
+    DevicePreviewDialog {
+        id: devicePreviewDialog
     }
     
     // Drag & Drop

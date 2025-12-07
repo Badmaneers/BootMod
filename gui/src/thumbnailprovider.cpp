@@ -1,4 +1,5 @@
 #include "thumbnailprovider.h"
+#include <QDebug>
 
 ThumbnailProvider::ThumbnailProvider() 
     : QQuickImageProvider(QQuickImageProvider::Pixmap) {}
@@ -6,8 +7,11 @@ ThumbnailProvider::ThumbnailProvider()
 QPixmap ThumbnailProvider::requestPixmap(const QString &id, QSize *size, const QSize &requestedSize) {
     int index = id.toInt();
     
+    qDebug() << "ThumbnailProvider::requestPixmap - Requested index:" << index << "Available thumbnails:" << m_thumbnails.keys();
+    
     if (m_thumbnails.contains(index)) {
         QPixmap pixmap = m_thumbnails[index];
+        qDebug() << "Found thumbnail for index" << index << "size:" << pixmap.size();
         
         if (size) {
             *size = pixmap.size();
@@ -20,6 +24,7 @@ QPixmap ThumbnailProvider::requestPixmap(const QString &id, QSize *size, const Q
         return pixmap;
     }
     
+    qDebug() << "Thumbnail not found for index" << index;
     // Return empty pixmap if not found
     return QPixmap();
 }

@@ -788,9 +788,20 @@ bool LogoFile::openProject(const QString &projectDir) {
         
         if (origFileMatch.hasMatch()) {
             QString origFile = origFileMatch.captured(1);
-            // Try to find the original file
-            QFileInfo origInfo(m_filePath);
-            QString searchPath = origInfo.dir().filePath(origFile);
+            // Try to find the original file - first try as absolute path, then relative to project dir
+            QString searchPath = origFile;
+            
+            if (!QFile::exists(searchPath)) {
+                // Try relative to project directory
+                QFileInfo projectInfo(projectDir);
+                searchPath = projectInfo.dir().filePath(origFile);
+            }
+            
+            if (!QFile::exists(searchPath)) {
+                // Try just the filename in the project directory
+                QFileInfo origInfo(origFile);
+                searchPath = QFileInfo(projectDir).dir().filePath(origInfo.fileName());
+            }
             
             if (QFile::exists(searchPath)) {
                 qDebug() << "Reloading original splash.img from:" << searchPath;
@@ -817,14 +828,60 @@ bool LogoFile::openProject(const QString &projectDir) {
                             }
                         }
                     }
+                    
+                    // Now update the m_logos list with the modified splash data
+                    // This reuses the code from loadSplashFile
+                    m_logos.clear();
+                    if (m_thumbnailProvider) {
+                        m_thumbnailProvider->clear();
+                    }
+                    
+                    uint32_t imageCount = m_splashImage->getImageCount();
+                    for (uint32_t i = 0; i < imageCount; i++) {
+                        auto info = m_splashImage->getImageInfo(i);
+                        uint32_t width = info.width;
+                        uint32_t height = info.height;
+                        
+                        // Get image data as BMP
+                        auto bmpData = m_splashImage->getImageData(i, width, height);
+                        
+                        // Convert BMP to QImage for thumbnail
+                        QImage image;
+                        if (!image.loadFromData(bmpData.data(), bmpData.size(), "BMP")) {
+                            qWarning() << "Failed to load BMP for image" << i;
+                            continue;
+                        }
+                        
+                        LogoEntry entry;
+                        entry.index = i;
+                        entry.width = width;
+                        entry.height = height;
+                        entry.format = "BMP";
+                        entry.size = bmpData.size();
+                        entry.thumbnail = createThumbnail(image);
+                        entry.rawData = bmpData;
+                        
+                        m_logos.append(entry);
+                        
+                        if (m_thumbnailProvider) {
+                            m_thumbnailProvider->addThumbnail(i, QPixmap::fromImage(entry.thumbnail));
+                        }
+                    }
+                    
+                    qDebug() << "Loaded" << imageCount << "images from Snapdragon project";
+                    
                 } else {
-                    emit errorOccurred("Could not reload original splash.img. Place the original file in the same folder.");
+                    emit errorOccurred(QString("Could not reload original splash.img from: %1\n\nPlace the original splash.img file in the same folder as the project.").arg(searchPath));
                     return false;
                 }
             } else {
-                emit errorOccurred(QString("Original file not found: %1. Cannot open Snapdragon project without it.").arg(origFile));
+                emit errorOccurred(QString("Original file not found: %1\n\nSearched locations:\n• %1 (absolute)\n• %2 (relative to project)\n• %3 (in project parent folder)\n\nPlace the original splash.img in one of these locations.").arg(origFile, origFile, QFileInfo(projectDir).dir().filePath(QFileInfo(origFile).fileName())));
                 return false;
             }
+        } else {
+            // No original file specified in metadata
+            emit errorOccurred("Project metadata does not contain original file path.\n\nThis Snapdragon project requires the original splash.img file to be opened.");
+            return false;
         }
         
     } else {
@@ -906,6 +963,90 @@ bool LogoFile::openProject(const QString &projectDir) {
     emit operationCompleted("Project opened successfully");
     
     return true;
+}
+
+void LogoFile::rescanProjectImages() {
+    if (m_projectDir.isEmpty() || !m_isLoaded) {
+        qWarning() << "Cannot rescan: no project loaded";
+        return;
+    }
+    
+    qDebug() << "Rescanning project images from:" << m_projectDir;
+    
+    // For MediaTek projects, rescan the images folder
+    if (m_currentFormat == bootmod::FormatType::MTK_LOGO) {
+        QString imagesDir = m_projectDir + "/images";
+        QDir dir(imagesDir);
+        
+        // Force refresh the directory cache
+        dir.refresh();
+        
+        QStringList imageFiles = dir.entryList(QStringList() << "logo_*.png", QDir::Files, QDir::Name);
+        
+        qDebug() << "Found" << imageFiles.size() << "image files";
+        if (!imageFiles.isEmpty()) {
+            qDebug() << "  First file:" << imageFiles.first();
+            qDebug() << "  Last file:" << imageFiles.last();
+        }
+        
+        // Clear current logos
+        m_logos.clear();
+        m_logoImages.clear();
+        
+        // Sort files by numeric index
+        std::sort(imageFiles.begin(), imageFiles.end(), [](const QString& a, const QString& b) {
+            QRegularExpression re("logo_(\\d+)_");
+            QRegularExpressionMatch matchA = re.match(a);
+            QRegularExpressionMatch matchB = re.match(b);
+            
+            if (matchA.hasMatch() && matchB.hasMatch()) {
+                int indexA = matchA.captured(1).toInt();
+                int indexB = matchB.captured(1).toInt();
+                return indexA < indexB;
+            }
+            return a < b;
+        });
+        
+        // Load each image
+        for (const QString& filename : imageFiles) {
+            QString imagePath = imagesDir + "/" + filename;
+            QImage image(imagePath);
+            
+            if (image.isNull()) {
+                qWarning() << "Failed to load:" << filename;
+                continue;
+            }
+            
+            try {
+                uint32_t width = 0, height = 0;
+                auto rawPixels = ImageUtils::loadFromPNG(imagePath.toStdString(), width, height, ColorMode::BGRA_LE);
+                auto compressedBlob = ImageUtils::zlibCompress(rawPixels);
+                
+                m_logoImages.push_back(compressedBlob);
+                
+                LogoEntry entry;
+                entry.index = m_logos.size() + 1;
+                entry.width = width;
+                entry.height = height;
+                entry.format = "BGRA8888";
+                entry.size = compressedBlob.size();
+                entry.thumbnail = createThumbnail(image);
+                entry.rawData = compressedBlob;
+                
+                m_logos.append(entry);
+                
+                if (m_thumbnailProvider) {
+                    m_thumbnailProvider->addThumbnail(entry.index, QPixmap::fromImage(entry.thumbnail));
+                }
+                
+            } catch (const std::exception& e) {
+                qWarning() << "Failed to process" << filename << ":" << e.what();
+            }
+        }
+        
+        qDebug() << "Rescan complete. Logo count:" << m_logos.size();
+        emit logoCountChanged();
+    }
 }
 
 bool LogoFile::saveProject() {

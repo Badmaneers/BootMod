@@ -28,6 +28,7 @@ class LogoFile : public QObject {
     Q_PROPERTY(QString headerInfo READ headerInfo NOTIFY headerInfoChanged)
     Q_PROPERTY(bool isProjectMode READ isProjectMode NOTIFY isProjectModeChanged)
     Q_PROPERTY(QString formatType READ formatType NOTIFY formatTypeChanged)
+    Q_PROPERTY(QString projectPath READ projectPath NOTIFY isProjectModeChanged)
     Q_PROPERTY(ThumbnailProvider* thumbnailProvider READ thumbnailProvider WRITE setThumbnailProvider)
 
 public:
@@ -39,6 +40,7 @@ public:
     QString headerInfo() const { return m_headerInfo; }
     bool isProjectMode() const { return !m_projectDir.isEmpty(); }
     QString formatType() const { return m_formatType; }
+    QString projectPath() const { return m_projectDir; }
     
     ThumbnailProvider* thumbnailProvider() const { return m_thumbnailProvider; }
     void setThumbnailProvider(ThumbnailProvider* provider) { m_thumbnailProvider = provider; }
@@ -62,6 +64,7 @@ public:
     Q_INVOKABLE bool saveProject();
     Q_INVOKABLE bool exportProject(const QString &outputPath);
     Q_INVOKABLE bool isProjectFolder(const QString &path);
+    Q_INVOKABLE void rescanProjectImages();  // Rescan images folder to update logo count
     
     const QList<LogoEntry>& logos() const { return m_logos; }
 

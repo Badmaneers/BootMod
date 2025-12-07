@@ -78,12 +78,25 @@ Dialog {
         
         Item { Layout.preferredHeight: 4 }
         
-        Text {
-            text: "✨ Features:"
-            font.bold: true
-            font.pixelSize: 14
-            color: textColor
+        RowLayout {
+            spacing: 8
             Layout.alignment: Qt.AlignHCenter
+            
+            Image {
+                source: "qrc:/BootMod/res/icons/sparkles.svg"
+                width: 16
+                height: 16
+                sourceSize: Qt.size(16, 16)
+                Layout.alignment: Qt.AlignVCenter
+            }
+            
+            Text {
+                text: "Features:"
+                font.bold: true
+                font.pixelSize: 14
+                color: textColor
+                Layout.alignment: Qt.AlignVCenter
+            }
         }
         
         GridLayout {
@@ -147,12 +160,25 @@ Dialog {
             Layout.alignment: Qt.AlignHCenter
             spacing: 8
             
-            Text {
-                text: "👨‍💻 Developer"
-                font.bold: true
-                font.pixelSize: 13
-                color: textColor
+            RowLayout {
+                spacing: 8
                 Layout.alignment: Qt.AlignHCenter
+                
+                Image {
+                    source: "qrc:/BootMod/res/icons/user.svg"
+                    width: 16
+                    height: 16
+                    sourceSize: Qt.size(16, 16)
+                    Layout.alignment: Qt.AlignVCenter
+                }
+                
+                Text {
+                    text: "Developer"
+                    font.bold: true
+                    font.pixelSize: 13
+                    color: textColor
+                    Layout.alignment: Qt.AlignVCenter
+                }
             }
             
             // GitHub Link
@@ -166,10 +192,12 @@ Dialog {
                     radius: 12
                     color: "#24292e"
                     
-                    Text {
+                    Image {
                         anchors.centerIn: parent
-                        text: "🔗"
-                        font.pixelSize: 14
+                        source: "qrc:/BootMod/res/icons/link.svg"
+                        width: 14
+                        height: 14
+                        sourceSize: Qt.size(14, 14)
                     }
                 }
                 
@@ -211,10 +239,12 @@ Dialog {
                     radius: 12
                     color: "#0088cc"
                     
-                    Text {
+                    Image {
                         anchors.centerIn: parent
-                        text: "✈️"
-                        font.pixelSize: 14
+                        source: "qrc:/BootMod/res/icons/telegram.svg"
+                        width: 14
+                        height: 14
+                        sourceSize: Qt.size(14, 14)
                     }
                 }
                 
@@ -248,11 +278,31 @@ Dialog {
         
         Item { Layout.preferredHeight: 4 }
         
-        Text {
-            text: "Made with ❤️ by Badmaneers"
-            color: textSecondaryColor
-            font.pixelSize: 11
+        RowLayout {
+            spacing: 6
             Layout.alignment: Qt.AlignHCenter
+            
+            Text {
+                text: "Made with"
+                color: textSecondaryColor
+                font.pixelSize: 11
+                Layout.alignment: Qt.AlignVCenter
+            }
+            
+            Image {
+                source: "qrc:/BootMod/res/icons/heart.svg"
+                width: 14
+                height: 14
+                sourceSize: Qt.size(14, 14)
+                Layout.alignment: Qt.AlignVCenter
+            }
+            
+            Text {
+                text: "by Badmaneers"
+                color: textSecondaryColor
+                font.pixelSize: 11
+                Layout.alignment: Qt.AlignVCenter
+            }
         }
         
         Text {
