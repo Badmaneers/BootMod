@@ -54,6 +54,11 @@ ApplicationWindow {
         id: commandManager
     }
     
+    // Bitmap editor wrapper
+    BitmapEditorWrapper {
+        id: bitmapEditor
+    }
+    
     // Folder model to scan image files
     FolderListModel {
         id: imagesFolderModel
@@ -1278,6 +1283,43 @@ ApplicationWindow {
                                         commandManager.executeRemoveCommand(layerManager, layersList.currentIndex, layer)
                                     }
                                 }
+                            }
+                        }
+                        
+                        Button {
+                            contentItem: RowLayout {
+                                spacing: 5
+                                Text {
+                                    text: "✏️"
+                                    font.pixelSize: 16
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+                                Text {
+                                    text: "Edit Current Frame"
+                                    color: "#ffffff"
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+                            }
+                            ToolTip.visible: hovered
+                            ToolTip.text: "Edit current frame in bitmap editor"
+                            onClicked: {
+                                // Get the image path for the current frame
+                                if (!logoFile.isProjectMode || !logoFile.projectPath) {
+                                    console.log("Not in project mode, cannot edit frame")
+                                    return
+                                }
+                                
+                                // Get dimensions for the current frame
+                                var dims = imageDimensions[currentFrame]
+                                if (!dims) {
+                                    console.log("No dimensions found for frame", currentFrame)
+                                    return
+                                }
+                                
+                                // Use the same path format as the image display: /images/logo_{frame}_{width}x{height}.png
+                                var framePath = logoFile.projectPath + "/images/logo_" + currentFrame + "_" + dims.width + "x" + dims.height + ".png"
+                                console.log("Opening bitmap editor for frame:", framePath)
+                                bitmapEditor.openEditor(framePath)
                             }
                         }
                         

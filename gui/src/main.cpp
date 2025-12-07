@@ -8,6 +8,7 @@
 #include "appcontext.h"
 #include "logolayer.h"
 #include "commandmanager.h"
+#include "bitmapeditorwrapper.h"
 
 #ifndef BOOTMOD_VERSION
 #define BOOTMOD_VERSION "1.6.0"
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
     qmlRegisterType<LogoLayer>("BootMod", 1, 0, "LogoLayer");
     qmlRegisterType<LayerManager>("BootMod", 1, 0, "LayerManager");
     qmlRegisterType<CommandManager>("BootMod", 1, 0, "CommandManager");
+    qmlRegisterType<BitmapEditorWrapper>("BootMod", 1, 0, "BitmapEditorWrapper");
     
     QQmlApplicationEngine engine;
     

@@ -24,6 +24,9 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Quick Qml Widgets)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
 
+# Add bitmap editor subdirectory
+add_subdirectory(bitmapeditor)
+
 # lodepng library
 set(LODEPNG_DIR ${CMAKE_SOURCE_DIR}/../external/lodepng)
 add_library(lodepng STATIC ${LODEPNG_DIR}/lodepng.cpp)
@@ -38,6 +41,7 @@ set(SOURCES
     src/appcontext.cpp
     src/logolayer.cpp
     src/commandmanager.cpp
+    src/bitmapeditorwrapper.cpp
     ../src/bootmod.cpp
     ../src/bootmod_png.cpp
     ../src/splash.cpp
@@ -50,6 +54,7 @@ set(HEADERS
     src/appcontext.h
     src/logolayer.h
     src/commandmanager.h
+    src/bitmapeditorwrapper.h
     ../include/bootmod.h
     ../include/splash.h
 )
@@ -112,6 +117,7 @@ qt6_add_qml_module(bootmod-gui
 target_include_directories(bootmod-gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/bitmapeditor
     ${LODEPNG_DIR}
 )
 
@@ -125,6 +131,7 @@ target_link_libraries(bootmod-gui PRIVATE
     ZLIB::ZLIB
     PNG::PNG
     lodepng
+    BitmapEditorLib
 )
 
 # Install

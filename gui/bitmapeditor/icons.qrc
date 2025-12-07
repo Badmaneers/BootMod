@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file>src/icons/brush.png</file>
+        <file>src/icons/circle.png</file>
+        <file>src/icons/eraser.png</file>
+        <file>src/icons/fill.png</file>
+        <file>src/icons/pen.png</file>
+        <file>src/icons/polygon.png</file>
+        <file>src/icons/rect.png</file>
+        <file>src/icons/text.png</file>
+        <file>src/icons/remove_layer.png</file>
+        <file>src/icons/new_layer.png</file>
+        <file>src/icons/icon.png</file>
+        <file>src/icons/zoom_in.png</file>
+        <file>src/icons/zoom_out.png</file>
+        <file>src/icons/arrow_down.png</file>
+        <file>src/icons/arrow_up.png</file>
+        <file>src/icons/color_picker.png</file>
+        <file>src/icons/layer_mask.png</file>
+    </qresource>
+</RCC>
