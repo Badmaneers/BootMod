@@ -69,6 +69,7 @@ public:
     Q_INVOKABLE bool exportProject(const QString &outputPath);
     Q_INVOKABLE bool isProjectFolder(const QString &path);
     Q_INVOKABLE void rescanProjectImages();  // Rescan images folder to update logo count
+    Q_INVOKABLE void refreshSingleLogo(int index);  // Refresh just one logo's thumbnail
     
     const QList<LogoEntry>& logos() const { return m_logos; }
 

@@ -1079,6 +1079,73 @@ void LogoFile::rescanProjectImages() {
     }
 }
 
+void LogoFile::refreshSingleLogo(int index) {
+    if (m_projectDir.isEmpty() || !m_isLoaded) {
+        qWarning() << "Cannot refresh: no project loaded";
+        return;
+    }
+    
+    if (index < 1 || index > m_logos.size()) {
+        qWarning() << "Invalid logo index:" << index;
+        return;
+    }
+    
+    qDebug() << "Refreshing single logo:" << index;
+    
+    // For MediaTek projects, reload just this one image
+    if (m_currentFormat == bootmod::FormatType::MTK_LOGO) {
+        QString imagesDir = m_projectDir + "/images";
+        QDir dir(imagesDir);
+        
+        // Find the image file for this logo index
+        QStringList imageFiles = dir.entryList(QStringList() << QString("logo_%1_*.png").arg(index), QDir::Files, QDir::Name);
+        
+        if (imageFiles.isEmpty()) {
+            qWarning() << "No image file found for logo" << index;
+            return;
+        }
+        
+        QString imagePath = imagesDir + "/" + imageFiles.first();
+        qDebug() << "  Loading:" << imagePath;
+        
+        QImage image(imagePath);
+        if (image.isNull()) {
+            qWarning() << "Failed to load:" << imagePath;
+            return;
+        }
+        
+        try {
+            uint32_t width = 0, height = 0;
+            auto rawPixels = ImageUtils::loadFromPNG(imagePath.toStdString(), width, height, ColorMode::BGRA_LE);
+            auto compressedBlob = ImageUtils::zlibCompress(rawPixels);
+            
+            // Update the existing logo entry
+            int logoIdx = index - 1;  // Convert to 0-based index
+            if (logoIdx >= 0 && logoIdx < m_logos.size()) {
+                m_logos[logoIdx].width = width;
+                m_logos[logoIdx].height = height;
+                m_logos[logoIdx].size = compressedBlob.size();
+                m_logos[logoIdx].thumbnail = createThumbnail(image);
+                m_logos[logoIdx].rawData = compressedBlob;
+                
+                if (logoIdx < m_logoImages.size()) {
+                    m_logoImages[logoIdx] = compressedBlob;
+                }
+                
+                // Update thumbnail provider
+                if (m_thumbnailProvider) {
+                    m_thumbnailProvider->addThumbnail(index, QPixmap::fromImage(m_logos[logoIdx].thumbnail));
+                }
+                
+                qDebug() << "  Refreshed logo" << index << "successfully";
+            }
+            
+        } catch (const std::exception& e) {
+            qWarning() << "Failed to process" << imagePath << ":" << e.what();
+        }
+    }
+}
+
 bool LogoFile::saveProject() {
     if (m_projectDir.isEmpty()) {
         emit errorOccurred("No project loaded");

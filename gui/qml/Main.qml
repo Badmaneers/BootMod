@@ -26,6 +26,9 @@ ApplicationWindow {
     readonly property int spacing: 16
     readonly property int radius: 6
     
+    // Property to force thumbnail refresh
+    property int thumbnailRefreshTimestamp: 0
+    
     // Helper function to convert URL to local path
     function urlToPath(urlString) {
         var path = urlString.toString()
@@ -603,7 +606,9 @@ ApplicationWindow {
                                     Image {
                                         anchors.fill: parent
                                         anchors.margins: 4
-                                        source: "image://thumbnail/" + logoIndex
+                                        source: root.thumbnailRefreshTimestamp > 0 
+                                                ? "image://thumbnail/" + logoIndex + "?t=" + root.thumbnailRefreshTimestamp
+                                                : "image://thumbnail/" + logoIndex
                                         fillMode: Image.PreserveAspectFit
                                         smooth: true
                                         cache: false
@@ -855,17 +860,53 @@ ApplicationWindow {
         
         // Connect to bitmap editor signal to refresh thumbnails
         onImageEdited: function(path) {
-            console.log("Main window: Image edited, refreshing thumbnails for:", path)
-            refreshThumbnails()
+            console.log("Main window: Image edited, refreshing thumbnail for:", path)
+            // Extract the logo index from the path (e.g., logo_1_720x1600.png -> 1)
+            var match = path.match(/logo_(\d+)_/)
+            if (match && match[1]) {
+                var logoIndex = parseInt(match[1])
+                refreshSpecificThumbnail(logoIndex)
+            } else {
+                // Fallback to refreshing all if we can't parse the index
+                refreshThumbnails()
+            }
+        }
+        
+        // When dialog closes, refresh all edited thumbnails to ensure they're up to date
+        onDialogClosed: function() {
+            console.log("Device Preview Dialog closed")
+            console.log("Edited logos during session:", devicePreviewDialog.editedLogos)
+            
+            // Refresh each edited logo
+            if (devicePreviewDialog.editedLogos && devicePreviewDialog.editedLogos.length > 0) {
+                console.log("Refreshing", devicePreviewDialog.editedLogos.length, "edited thumbnails")
+                for (var i = 0; i < devicePreviewDialog.editedLogos.length; i++) {
+                    var logoIndex = devicePreviewDialog.editedLogos[i]
+                    refreshSpecificThumbnail(logoIndex)
+                }
+            }
         }
     }
     
-    // Function to refresh thumbnail cache
+    // Function to refresh a specific thumbnail
+    function refreshSpecificThumbnail(logoIndex) {
+        if (logoFile.isLoaded && logoFile.isProjectMode) {
+            console.log("Refreshing only thumbnail for logo", logoIndex)
+            logoFile.refreshSingleLogo(logoIndex)
+            // Update timestamp to force Image component to reload just this one
+            root.thumbnailRefreshTimestamp = Date.now()
+        }
+    }
+    
+    // Function to refresh thumbnail cache (fallback for bulk operations)
     function refreshThumbnails() {
         // Force the thumbnail provider to reload by rescanning project images
         if (logoFile.isLoaded && logoFile.isProjectMode) {
             console.log("Rescanning project images to refresh thumbnails")
             logoFile.rescanProjectImages()
+            // Update timestamp to force Image components to reload
+            root.thumbnailRefreshTimestamp = Date.now()
+            console.log("Thumbnail refresh timestamp updated to", root.thumbnailRefreshTimestamp)
         }
     }
     

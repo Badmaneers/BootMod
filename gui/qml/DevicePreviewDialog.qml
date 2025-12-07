@@ -20,6 +20,10 @@ ApplicationWindow {
     
     // Signals to notify when images are edited
     signal imageEdited(string path)
+    signal dialogClosed()
+    
+    // Track which logos were edited during this session
+    property var editedLogos: []
     
     property int currentFrame: 1  // Start from frame 1 (logo_1)
     property int totalFrames: 0
@@ -63,35 +67,96 @@ ApplicationWindow {
         
         onImageSaved: function(path) {
             console.log("Bitmap editor saved image:", path)
-            // Force refresh of all layer images by triggering updateImage()
-            refreshAllLayers()
+            // Extract the logo index from the path (e.g., logo_1_720x1600.png -> 1)
+            var match = path.match(/logo_(\d+)_/)
+            if (match && match[1]) {
+                var logoIndex = parseInt(match[1])
+                console.log("Refreshing only logo index:", logoIndex)
+                
+                // Track this logo as edited
+                if (editedLogos.indexOf(logoIndex) === -1) {
+                    editedLogos.push(logoIndex)
+                }
+                
+                refreshSpecificImage(logoIndex, path)
+            } else {
+                // Fallback to refreshing all if we can't parse the index
+                refreshAllLayers()
+            }
             // Emit signal so Main.qml can also refresh
             devicePreviewDialog.imageEdited(path)
         }
         
         onEditorClosed: function() {
             console.log("Bitmap editor closed")
-            // Also refresh when closed in case the save happened earlier
-            refreshAllLayers()
+            // Don't refresh on close since imageSaved already handled it
         }
     }
     
-    // Function to refresh all layer images
+    // Function to refresh only a specific image by logo index
+    function refreshSpecificImage(logoIndex, imagePath) {
+        console.log("Refreshing specific image - logoIndex:", logoIndex, "path:", imagePath)
+        var timestamp = Date.now()
+        
+        // Only refresh layers that use this specific logo index
+        for (var i = 0; i < layersRepeater.count; i++) {
+            var layerItem = layersRepeater.itemAt(i)
+            if (layerItem && layerItem.layerData) {
+                var layerLogoIndex = layerItem.layerData.logoIndex
+                
+                // Check if this layer uses the edited logo
+                // Also handle auto-animation layers (endFrame === -1) if current frame matches
+                var shouldRefresh = (layerLogoIndex === logoIndex) ||
+                                  (layerItem.layerData.startFrame === 1 && 
+                                   layerItem.layerData.endFrame === -1 && 
+                                   devicePreviewDialog.currentFrame === logoIndex)
+                
+                if (shouldRefresh) {
+                    console.log("  Refreshing layer", i, "which uses logo", layerLogoIndex)
+                    // Find the Image component
+                    for (var j = 0; j < layerItem.children.length; j++) {
+                        var child = layerItem.children[j]
+                        if (child.toString().indexOf("Image") !== -1 && child.source) {
+                            // Force refresh by updating source with timestamp
+                            var currentSource = child.source.toString()
+                            var baseSource = currentSource.split('?')[0]
+                            child.source = baseSource + "?t=" + timestamp
+                            console.log("    Updated source to:", child.source)
+                            break
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Function to refresh all layer images (fallback for bulk operations)
     function refreshAllLayers() {
         console.log("Refreshing all layers...")
+        var timestamp = Date.now()
+        
         // Trigger updateImage for all layers
         for (var i = 0; i < layersRepeater.count; i++) {
             var layerItem = layersRepeater.itemAt(i)
             if (layerItem && layerItem.layerData) {
-                var image = layerItem.children[1] // The Image is the second child (after Rectangle selection border)
-                if (image && image.updateImage) {
-                    // Force cache clear by appending timestamp
-                    var oldSource = image.source.toString()
-                    if (oldSource.indexOf("?") > -1) {
-                        oldSource = oldSource.substring(0, oldSource.indexOf("?"))
+                // Find the Image component within the layer item
+                // The structure is: layerItem (MouseArea) -> Rectangle (selection) + Image
+                for (var j = 0; j < layerItem.children.length; j++) {
+                    var child = layerItem.children[j]
+                    if (child.toString().indexOf("Image") !== -1 && child.updateImage) {
+                        console.log("  Refreshing layer", i)
+                        // Update the image source with a timestamp to bypass cache
+                        child.updateImage()
+                        // Append timestamp to force reload
+                        var currentSource = child.source.toString()
+                        if (currentSource && currentSource !== "") {
+                            // Remove old timestamp if exists
+                            var baseSource = currentSource.split('?')[0]
+                            child.source = baseSource + "?t=" + timestamp
+                            console.log("    New source:", child.source)
+                        }
+                        break
                     }
-                    image.source = oldSource + "?" + Date.now()
-                    console.log("  Refreshed layer", i, "source:", image.source)
                 }
             }
         }
@@ -154,6 +219,9 @@ ApplicationWindow {
     function startPreview(startFrame) {
         currentFrame = startFrame >= 1 ? startFrame : 1
         totalFrames = logoFile.logoCount
+        
+        // Reset edited logos tracking
+        editedLogos = []
         
         // Reset dimensions ready flag
         dimensionsReady = false
@@ -428,6 +496,7 @@ ApplicationWindow {
                     
                     // Layer rendering
                     Repeater {
+                        id: layersRepeater
                         model: layerManager.layerCount
                         
                         delegate: Item {
@@ -578,7 +647,7 @@ ApplicationWindow {
                                 fillMode: Image.PreserveAspectFit
                                 opacity: layerItem.layerData ? layerItem.layerData.opacity : 1.0
                                 smooth: true
-                                cache: false
+                                cache: false  // Disable caching to allow image refresh
                                 asynchronous: true
                                 
                                 // Smart sizing logic - using properties not bindings so context menu can override
@@ -1930,9 +1999,11 @@ ApplicationWindow {
         onActivated: commandManager.redo()
     }
     
-    onClosing: {
+    onClosing: function(close) {
         stop()
         saveLayers()
+        console.log("Device Preview Dialog closing, edited logos:", editedLogos)
+        dialogClosed()
     }
     
     // File dialog for adding custom images
