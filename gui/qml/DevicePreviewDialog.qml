@@ -1113,38 +1113,32 @@ ApplicationWindow {
                         spacing: 5
                         
                         Button {
-                            contentItem: Row {
-                                spacing: 5
+                            contentItem: Item {
+                                implicitWidth: 24
+                                implicitHeight: 24
                                 Image {
                                     source: isPlaying ? "qrc:/BootMod/res/icons/" + (isPlaying ? "pause" : "play") + ".svg" : "qrc:/BootMod/res/icons/play.svg"
+                                    anchors.centerIn: parent
                                     width: 16
                                     height: 16
                                     sourceSize: Qt.size(16, 16)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                Text {
-                                    text: isPlaying ? "Pause" : "Play"
-                                    color: "#ffffff"
-                                    anchors.verticalCenter: parent.verticalCenter
+                                    fillMode: Image.PreserveAspectFit
                                 }
                             }
                             onClicked: isPlaying ? pause() : play()
                         }
                         
                         Button {
-                            contentItem: Row {
-                                spacing: 5
+                            contentItem: Item {
+                                implicitWidth: 24
+                                implicitHeight: 24
                                 Image {
                                     source: "qrc:/BootMod/res/icons/stop.svg"
+                                    anchors.centerIn: parent
                                     width: 16
                                     height: 16
                                     sourceSize: Qt.size(16, 16)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                Text {
-                                    text: "Stop"
-                                    color: "#ffffff"
-                                    anchors.verticalCenter: parent.verticalCenter
+                                    fillMode: Image.PreserveAspectFit
                                 }
                             }
                             onClicked: stop()
@@ -1300,6 +1294,7 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         
                         Button {
+                            padding: 8
                             contentItem: RowLayout {
                                 spacing: 5
                                 Image {
@@ -1323,6 +1318,7 @@ ApplicationWindow {
                         }
                         
                         Button {
+                            padding: 8
                             contentItem: RowLayout {
                                 spacing: 5
                                 Image {
@@ -1361,6 +1357,7 @@ ApplicationWindow {
                         }
                         
                         Button {
+                            padding: 8
                             contentItem: Row {
                                 spacing: 5
                                 Image {
@@ -1394,16 +1391,26 @@ ApplicationWindow {
                         }
                         
                         Button {
+                            padding: 8
                             contentItem: RowLayout {
-                                spacing: 5
-                                Text {
-                                    text: "✏️"
-                                    font.pixelSize: 16
+                                spacing: 8
+                                Item {
+                                    implicitWidth: 20
+                                    implicitHeight: 20
                                     Layout.alignment: Qt.AlignVCenter
+                                    Image {
+                                        source: "qrc:/BootMod/res/icons/edit.svg"
+                                        anchors.centerIn: parent
+                                        width: 18
+                                        height: 18
+                                        sourceSize: Qt.size(18, 18)
+                                        fillMode: Image.PreserveAspectFit
+                                    }
                                 }
                                 Text {
                                     text: "Edit Current Frame"
                                     color: "#ffffff"
+                                    font.pixelSize: 13
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                             }
@@ -1431,7 +1438,8 @@ ApplicationWindow {
                         }
                         
                         MenuSeparator {
-                            Layout.preferredHeight: 20
+                            Layout.preferredWidth: 5
+                            Layout.preferredHeight: 5
                         }
                         
                         Button {
@@ -1509,6 +1517,7 @@ ApplicationWindow {
                         }
                         
                         Button {
+                            padding: 8
                             contentItem: Row {
                                 spacing: 5
                                 Image {
@@ -1560,27 +1569,6 @@ ApplicationWindow {
                                     }
                                 }
                             }
-                        }
-                        
-                        Item { Layout.fillWidth: true }
-                        
-                        Button {
-                            contentItem: Row {
-                                spacing: 5
-                                Image {
-                                    source: "qrc:/BootMod/res/icons/save.svg"
-                                    width: 16
-                                    height: 16
-                                    sourceSize: Qt.size(16, 16)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                Text {
-                                    text: "Save"
-                                    color: "#ffffff"
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-                            onClicked: saveLayers()
                         }
                     }
                     
@@ -1970,7 +1958,50 @@ ApplicationWindow {
             Item { Layout.fillWidth: true }
             
             Button {
-                text: "Close"
+                padding: 8
+                contentItem: RowLayout {
+                    spacing: 8
+                    Image {
+                        source: "qrc:/BootMod/res/icons/save.svg"
+                        width: 18
+                        height: 18
+                        sourceSize: Qt.size(18, 18)
+                        fillMode: Image.PreserveAspectFit
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                    Text {
+                        text: "Save"
+                        color: "#ffffff"
+                        font.pixelSize: 13
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                }
+                ToolTip.text: "Save configuration"
+                ToolTip.visible: hovered
+                onClicked: saveLayers()
+            }
+            
+            Button {
+                padding: 8
+                contentItem: RowLayout {
+                    spacing: 8
+                    Image {
+                        source: "qrc:/BootMod/res/icons/close.svg"
+                        width: 18
+                        height: 18
+                        sourceSize: Qt.size(18, 18)
+                        fillMode: Image.PreserveAspectFit
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                    Text {
+                        text: "Close"
+                        color: "#ffffff"
+                        font.pixelSize: 13
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                }
+                ToolTip.text: "Close preview dialog"
+                ToolTip.visible: hovered
                 onClicked: {
                     stop()
                     saveLayers()
