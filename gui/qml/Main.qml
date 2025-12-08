@@ -604,14 +604,14 @@ ApplicationWindow {
                                     radius: root.radius / 2
                                     
                                     Image {
+                                        id: thumbnailImage
                                         anchors.fill: parent
                                         anchors.margins: 4
-                                        source: root.thumbnailRefreshTimestamp > 0 
-                                                ? "image://thumbnail/" + logoIndex + "?t=" + root.thumbnailRefreshTimestamp
-                                                : "image://thumbnail/" + logoIndex
+                                        source: "image://thumbnail/" + logoIndex + "?t=" + root.thumbnailRefreshTimestamp
                                         fillMode: Image.PreserveAspectFit
                                         smooth: true
                                         cache: false
+                                        asynchronous: true
                                     }
                                 }
                                 

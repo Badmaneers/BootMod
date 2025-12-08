@@ -5,9 +5,16 @@ ThumbnailProvider::ThumbnailProvider()
     : QQuickImageProvider(QQuickImageProvider::Pixmap) {}
 
 QPixmap ThumbnailProvider::requestPixmap(const QString &id, QSize *size, const QSize &requestedSize) {
-    int index = id.toInt();
+    // Parse index from id, ignoring any query parameters (e.g., "1?t=12345" -> 1)
+    QString idStr = id;
+    int queryPos = idStr.indexOf('?');
+    if (queryPos > 0) {
+        idStr = idStr.left(queryPos);
+    }
     
-    qDebug() << "ThumbnailProvider::requestPixmap - Requested index:" << index << "Available thumbnails:" << m_thumbnails.keys();
+    int index = idStr.toInt();
+    
+    qDebug() << "ThumbnailProvider::requestPixmap - Requested id:" << id << "Parsed index:" << index << "Available thumbnails:" << m_thumbnails.keys();
     
     if (m_thumbnails.contains(index)) {
         QPixmap pixmap = m_thumbnails[index];

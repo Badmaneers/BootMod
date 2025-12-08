@@ -121,3 +121,6 @@ CLOSE_PROJECT_BUTTON.md
 # Backup files
 gui.backup/
 *.backup
+
+# QBitmapEditor
+gui/bitmappeditor/QtBitmapEditor
