@@ -62,6 +62,7 @@
     <addaction name="separator"/>
     <addaction name="actionAdd_layer"/>
     <addaction name="actionRemove_layer"/>
+    <addaction name="actionConvert_to_Bitmap"/>
     <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
@@ -259,6 +260,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionConvert_to_Bitmap">
+   <property name="text">
+    <string>Convert to Bitmap Layer</string>
+   </property>
+   <property name="toolTip">
+    <string>Convert the selected image layer to an editable bitmap layer</string>
    </property>
   </action>
  </widget>

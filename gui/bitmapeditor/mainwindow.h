@@ -11,6 +11,7 @@
 
 #include "base/bitmapappcontext.h"
 #include "utility/colorpicker.h"
+#include "importimage.h"
 #include "exportproject.h"
 
 
@@ -37,6 +38,7 @@ protected:
     ColorPicker *colorPicker;
 
     // windows
+    ImportImage *window_importImage;
     ExportProject *window_exportProject;
 
     virtual void showEvent(QShowEvent *event) override;
@@ -48,6 +50,11 @@ private slots:
      * @brief Otevre okno pro exportovani obrazku
      */
     void on_actionExport_image_triggered();
+
+    /**
+     * @brief Otevre file dialog pro importovani obrazku do projektu
+     */
+    void on_actionImport_image_triggered();
 
     /**
      * @brief Ukoncni aplikaci (pred ukonceni zobrazi dialog pro ulozeni projektu)
@@ -93,6 +100,11 @@ private slots:
      * @brief Odstrani aktualne oznacenou vrstvu
      */
     void on_actionRemove_layer_triggered();
+
+    /**
+     * @brief Konvertuje ImageLayer na BitmapLayer
+     */
+    void on_actionConvert_to_Bitmap_triggered();
 
     /**
      * @brief Priblizi workspace

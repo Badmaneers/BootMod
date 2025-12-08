@@ -13,6 +13,8 @@
 #include "tool/fillcolor.h"
 #include "tool/eyedropper.h"
 #include "tool/text.h"
+#include "layer/bitmaplayer.h"
+#include "layer/imagelayer.h"
 
 
 #define DIALOG_CLOSE_MSG tr("Are you sure you want to quit the app? If you haven't saved the project, you will lose your last unsaved work.")
@@ -47,11 +49,11 @@ MainWindow::MainWindow(BitmapAppContext *context, QWidget *parent)
     this->ui->actionNew_project->setVisible(false);
     this->ui->actionOpen_project->setVisible(false);
     this->ui->actionSave_project->setVisible(false);
-    this->ui->actionImport_image->setVisible(false);
     this->ui->actionPrint->setVisible(false);
     this->ui->actionAbout->setVisible(false);
     
-    // Rename "Export" to "Export as PNG..."
+    // Rename menu items for BootMod context
+    this->ui->actionImport_image->setText(tr("Import Image..."));
     this->ui->actionExport_image->setText(tr("Export as PNG..."));
     
     // Label for status bar
@@ -100,7 +102,8 @@ MainWindow::MainWindow(BitmapAppContext *context, QWidget *parent)
 
 
     /*****************************************************************************/
-    // inicializace oken (only keep Export dialog for PNG export)
+    // inicializace oken
+    this->window_importImage = new ImportImage(this->context);
     this->window_exportProject = new ExportProject(this->context);
     /*****************************************************************************/
 
@@ -125,7 +128,8 @@ MainWindow::~MainWindow()
     if(this->splitter_horizontal) delete this->splitter_horizontal;
     if(this->statusLabel) delete this->statusLabel;
 
-    // Only delete the one dialog we're keeping
+    // Delete dialogs
+    if(this->window_importImage) delete this->window_importImage;
     if(this->window_exportProject) delete this->window_exportProject;
 }
 
@@ -157,6 +161,10 @@ void MainWindow::on_actionExport_image_triggered()
     this->window_exportProject->show();
 }
 
+void MainWindow::on_actionImport_image_triggered()
+{
+    this->window_importImage->show();
+}
 
 void MainWindow::on_actionExit_triggered()
 {
@@ -228,6 +236,90 @@ void MainWindow::on_actionRemove_layer_triggered()
     if(lm) {
         lm->removeLayer();
     }
+}
+
+void MainWindow::on_actionConvert_to_Bitmap_triggered()
+{
+    if(this->context == NULL) return;
+    
+    Project *project = this->context->getProject();
+    if(project == NULL) {
+        QMessageBox::warning(
+            this,
+            tr("Convert to Bitmap"),
+            tr("No project is open."));
+        return;
+    }
+    
+    // Get current layer
+    Layer *currentLayer = project->getSelectedLayer();
+    if(currentLayer == NULL) {
+        QMessageBox::warning(
+            this,
+            tr("Convert to Bitmap"),
+            tr("No layer selected."));
+        return;
+    }
+    
+    // Check if it's an ImageLayer
+    if(currentLayer->getType() != IMAGE_LAYER_TYPE) {
+        QMessageBox::information(
+            this,
+            tr("Convert to Bitmap"),
+            tr("Selected layer is not an image layer. Only image layers can be converted to bitmap layers."));
+        return;
+    }
+    
+    ImageLayer *imageLayer = (ImageLayer*)currentLayer;
+    
+    // Create a new BitmapLayer with the same properties
+    BitmapLayer *bitmapLayer = new BitmapLayer(
+        project,
+        imageLayer->getName(),
+        imageLayer->image.size()
+    );
+    
+    // Copy the image content
+    QPainter painter(&bitmapLayer->image);
+    painter.drawImage(0, 0, imageLayer->image);
+    painter.end();
+    
+    // Copy layer properties (using public getters/setters)
+    bitmapLayer->setOpacity(imageLayer->getOpacity());
+    bitmapLayer->setBlendMode(imageLayer->getBlendMode());
+    bitmapLayer->enableAntialiasing(imageLayer->isAntialiasingEnabled());
+    
+    // Find the index of the current layer
+    Layers_t *layers = project->getLayers();
+    int layerIndex = -1;
+    for(int i = 0; i < layers->size(); i++) {
+        if(layers->at(i) == currentLayer) {
+            layerIndex = i;
+            break;
+        }
+    }
+    
+    if(layerIndex < 0) {
+        delete bitmapLayer;
+        QMessageBox::warning(
+            this,
+            tr("Convert to Bitmap"),
+            tr("Could not find layer in project."));
+        return;
+    }
+    
+    // Remove the old layer and insert the new one at the same position
+    project->removeLayer(imageLayer);
+    project->insertLayer(layerIndex, bitmapLayer);
+    project->setSelectedLayer(bitmapLayer);
+    
+    // Repaint
+    project->requestRepaint();
+    
+    QMessageBox::information(
+        this,
+        tr("Convert to Bitmap"),
+        tr("Image layer successfully converted to bitmap layer. You can now edit it with drawing tools."));
 }
 
 
