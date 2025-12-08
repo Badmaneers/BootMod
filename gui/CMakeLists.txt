@@ -77,6 +77,7 @@ set(RESOURCE_FILES
     res/icons/layers.svg
     res/icons/add.svg
     res/icons/delete.svg
+    res/icons/edit.svg
     res/icons/move.svg
     res/icons/eye.svg
     res/icons/eye-off.svg
