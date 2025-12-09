@@ -1,0 +1,152 @@
+language: cpp
+dist: jammy
+os: linux
+compiler: gcc
+
+# Only build these branches
+branches:
+  only:
+    - gui
+    - main
+
+addons:
+  apt:
+    packages:
+      - cmake
+      - build-essential
+      - qt6-base-dev
+      - qt6-declarative-dev
+      - qt6-tools-dev
+      - qt6-tools-dev-tools
+      - libqt6core6
+      - libqt6gui6
+      - libqt6widgets6
+      - libqt6qml6
+      - libqt6quick6
+      - libqt6opengl6
+      - libqt6opengl6-dev
+      - qt6-base-dev-tools
+      - libgl1-mesa-dev
+      - libglu1-mesa-dev
+      - zlib1g-dev
+      - libpng-dev
+      - wget
+      - curl
+      - jq
+
+env:
+  global:
+    - QT_QPA_PLATFORM=offscreen
+    - QT_SELECT=qt6
+
+before_install:
+  - echo "Setting up build environment..."
+  - export VERSION=$(git describe --tags --always 2>/dev/null || echo "dev-$(git rev-parse --short HEAD)")
+  - export BUILD_DATE=$(date +%Y%m%d)
+  - echo "Version ${VERSION}"
+  - echo "Build Date ${BUILD_DATE}"
+
+script:
+  - echo "Building BootMod ${VERSION}..."
+  - chmod +x build.sh
+  - ./build.sh --version "${VERSION}" --release --package --gui-only
+
+before_deploy:
+  - echo "Preparing deployment..."
+  - ls -lh dist/
+
+deploy:
+  - provider: releases
+    api_key: ${GITHUB_TOKEN}
+    file_glob: true
+    file: dist/*.tar.gz
+    name: "BootMod ${TRAVIS_TAG}"
+    skip_cleanup: true
+    draft: false
+    on:
+      tags: true
+      
+  - provider: releases
+    api_key: ${GITHUB_TOKEN}
+    file_glob: true
+    file: dist/*.tar.gz
+    name: "BootMod Development Build"
+    draft: false
+    prerelease: true
+    skip_cleanup: true
+    on:
+      branch: gui
+      tags: false
+
+after_deploy:
+  - echo "Uploading to Telegram..."
+  - |
+    if [ ! -z "${TELEGRAM_BOT_TOKEN}" ] && [ ! -z "${TELEGRAM_CHAT_ID}" ]; then
+      echo "Sending Telegram notification..."
+      
+      if [ ! -z "${TRAVIS_TAG}" ]; then
+        EMOJI="🎉"
+        TYPE="Release"
+        VERSION_TEXT="${TRAVIS_TAG}"
+      else
+        EMOJI="🔨"
+        TYPE="Development Build"
+        VERSION_TEXT="${VERSION}"
+      fi
+      
+      MESSAGE="${EMOJI} *BootMod ${TYPE}*%0A%0A"
+      MESSAGE="${MESSAGE}*Version:* \`${VERSION_TEXT}\`%0A"
+      MESSAGE="${MESSAGE}*Build Date:* ${BUILD_DATE}%0A"
+      MESSAGE="${MESSAGE}*Commit:* [\`${TRAVIS_COMMIT:0:7}\`](https://github.com/${TRAVIS_REPO_SLUG}/commit/${TRAVIS_COMMIT})%0A"
+      MESSAGE="${MESSAGE}*Branch:* ${TRAVIS_BRANCH}%0A"
+      MESSAGE="${MESSAGE}*Platform:* Linux x86_64%0A%0A"
+      MESSAGE="${MESSAGE}✅ *Status:* Build Successful%0A%0A"
+      MESSAGE="${MESSAGE}📥 [Download](https://github.com/${TRAVIS_REPO_SLUG}/releases)"
+      
+      curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        -d chat_id="${TELEGRAM_CHAT_ID}" \
+        -d text="${MESSAGE}" \
+        -d parse_mode="Markdown" \
+        -d disable_web_page_preview=false
+      
+      if [ ! -z "${TRAVIS_TAG}" ]; then
+        PACKAGE=$(ls dist/*.tar.gz | head -n1)
+        if [ -f "$PACKAGE" ]; then
+          echo "Uploading package to Telegram..."
+          CAPTION="BootMod ${TRAVIS_TAG} - Linux x86_64"
+          curl -F chat_id="${TELEGRAM_CHAT_ID}" \
+            -F document=@"${PACKAGE}" \
+            -F caption="${CAPTION}" \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument"
+        fi
+      fi
+      
+      echo "Telegram notification sent!"
+    else
+      echo "Telegram credentials not configured"
+    fi
+
+after_failure:
+  - echo "Build failed!"
+  - |
+    if [ ! -z "${TELEGRAM_BOT_TOKEN}" ] && [ ! -z "${TELEGRAM_CHAT_ID}" ]; then
+      MESSAGE="❌ *BootMod Build Failed*%0A%0A"
+      MESSAGE="${MESSAGE}*Branch:* ${TRAVIS_BRANCH}%0A"
+      MESSAGE="${MESSAGE}*Commit:* [\`${TRAVIS_COMMIT:0:7}\`](https://github.com/${TRAVIS_REPO_SLUG}/commit/${TRAVIS_COMMIT})%0A"
+      MESSAGE="${MESSAGE}*Build:* [View Logs](https://travis-ci.org/${TRAVIS_REPO_SLUG}/builds/${TRAVIS_BUILD_ID})"
+      
+      curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        -d chat_id="${TELEGRAM_CHAT_ID}" \
+        -d text="${MESSAGE}" \
+        -d parse_mode="Markdown"
+    fi
+
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+
+cache:
+  directories:
+    - $HOME/.cache
+    - gui/build
