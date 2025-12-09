@@ -56,7 +56,6 @@ test_roundtrip/
 *.bin
 !example.bin
 *.z
-*.png
 !docs/*.png
 !resources/*.png
 !screenshots/*.png
