@@ -338,16 +338,16 @@ create_release_package() {
         cp gui/build/bootmod-gui "dist/${RELEASE_NAME}/bin/"
         HAS_GUI=true
         
-        # Copy resources
-        if [ -d "gui/res" ]; then
-            cp -r gui/res "dist/${RELEASE_NAME}/"
-            print_success "GUI resources included"
-        fi
+        # # Copy resources
+        # if [ -d "gui/res" ]; then
+        #     cp -r gui/res "dist/${RELEASE_NAME}/"
+        #     print_success "GUI resources included"
+        # fi
         
-        if [ -d "gui/qml" ]; then
-            cp -r gui/qml "dist/${RELEASE_NAME}/"
-            print_success "QML files included"
-        fi
+        # if [ -d "gui/qml" ]; then
+        #     cp -r gui/qml "dist/${RELEASE_NAME}/"
+        #     print_success "QML files included"
+        # fi
         
         print_success "GUI binary included"
     fi

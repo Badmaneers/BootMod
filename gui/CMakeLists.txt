@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 if(DEFINED ENV{BOOTMOD_VERSION})
     set(PROJECT_VERSION $ENV{BOOTMOD_VERSION})
 else()
-    set(PROJECT_VERSION "2.0.0")
+    set(PROJECT_VERSION "2.5.0")
 endif()
 
 project(bootmod-gui VERSION ${PROJECT_VERSION} LANGUAGES CXX)
