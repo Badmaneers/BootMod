@@ -247,19 +247,19 @@ build_cli() {
         make -j$CORES 2>&1 | tee build_cli.log || true
     fi
     
-    if [ ! -f "bin/mtklogo" ]; then
+    if [ ! -f "bin/bootmod" ]; then
         print_error "CLI build failed - binary not found"
         print_info "Check build_cli.log for details"
         exit 1
     fi
     
-    CLI_SIZE=$(du -h bin/mtklogo | cut -f1)
+    CLI_SIZE=$(du -h bin/bootmod | cut -f1)
     print_success "CLI tool built successfully (${CLI_SIZE})"
     
     if [ "$BUILD_MODE" = "Release" ]; then
         print_step "Stripping debug symbols..."
-        strip bin/mtklogo
-        STRIPPED_SIZE=$(du -h bin/mtklogo | cut -f1)
+        strip bin/bootmod
+        STRIPPED_SIZE=$(du -h bin/bootmod | cut -f1)
         print_success "Binary stripped (${STRIPPED_SIZE})"
     fi
 }
