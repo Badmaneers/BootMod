@@ -425,22 +425,52 @@ std::vector<std::pair<uint32_t, uint32_t>> MtkLogo::guessDimensions(size_t byte_
         {1440, 2960},  // QHD+ (18.5:9)
         {1440, 2880},  // QHD+ (18:9)
         {1440, 2560},  // QHD (16:9)
+        // Tablets / landscape screens
+        {2560, 800},   // WUXGA tablet landscape
+        {800, 1280},   // WXGA tablet portrait
         // Older/smaller devices
+        {480, 856},    // FWVGA variant
         {480, 854},    // FWVGA
+        {480, 853},    // FWVGA variant
         {480, 800},    // WVGA
         {540, 960},    // qHD
         {600, 1024},   // WSVGA
         {640, 1136},   // iPhone 5
         {750, 1334},   // iPhone 6/7/8
+        {320, 480},    // HVGA
+        {240, 320},    // QVGA
         // Small icons/indicators (prefer square, then portrait)
         {28, 28},              // Square icons
+        {36, 51},              // Indicator (portrait)
         {36, 50},              // Battery/charging indicator (portrait)
         {50, 36},              // Battery/charging indicator (landscape)
         {30, 60},              // Tall charging indicator
         {60, 30},              // Wide charging indicator
         {40, 45}, {45, 40},    // Tiny icons
         {56, 14}, {14, 56},    // Progress bars
-        {7, 112}, {112, 7}     // Thin bars
+        {7, 112}, {112, 7},    // Thin bars
+        // MTK splash indicator assets
+        {304, 52},   {304, 1},
+        {218, 51},
+        {169, 28},   {169, 1},
+        {163, 29},   {163, 1},
+        {138, 20},   {138, 2},
+        {135, 24},   {135, 1},
+        {108, 121},
+        {102, 1},
+        {84, 121},
+        {63, 105},
+        {57, 64},
+        {48, 54},
+        {45, 139},   {45, 64},
+        {38, 54},
+        {32, 105},   {32, 36},
+        {30, 27},
+        {27, 36},
+        {23, 33},
+        {34, 33},
+        {15, 27},
+        {10, 16}
     };
     
     // Check common resolutions first
