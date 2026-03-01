@@ -2,6 +2,27 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QIcon>
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <dwmapi.h>
+#include <QSettings>
+#include <QQuickWindow>
+
+static void applyWindowsDarkTitleBar(QObject *rootObject) {
+    auto *window = qobject_cast<QQuickWindow *>(rootObject);
+    if (!window) return;
+    QSettings reg(
+        "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        QSettings::NativeFormat);
+    BOOL dark = (reg.value("AppsUseLightTheme", 1).toInt() == 0) ? TRUE : FALSE;
+    HWND hwnd = reinterpret_cast<HWND>(window->winId());
+    // 20 = DWMWA_USE_IMMERSIVE_DARK_MODE (Win10 20H1+ / Win11)
+    DwmSetWindowAttribute(hwnd, 20, &dark, sizeof(dark));
+    // 19 = fallback for older Win10 builds
+    DwmSetWindowAttribute(hwnd, 19, &dark, sizeof(dark));
+}
+#endif
+
 #include "logofile.h"
 #include "logolistmodel.h"
 #include "thumbnailprovider.h"
@@ -46,8 +67,15 @@ int main(int argc, char *argv[]) {
     
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
+        if (!obj && url == objUrl) {
             QCoreApplication::exit(-1);
+            return;
+        }
+        if (obj && url == objUrl) {
+#ifdef Q_OS_WIN
+            applyWindowsDarkTitleBar(obj);
+#endif
+        }
     }, Qt::QueuedConnection);
     
     engine.load(url);

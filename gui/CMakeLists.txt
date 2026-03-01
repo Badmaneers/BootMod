@@ -140,9 +140,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_L
     target_link_libraries(bootmod-gui PRIVATE stdc++fs)
 endif()
 
-# Windows: GUI app uses WinMain subsystem so no console window appears
+# Windows-specific: GUI subsystem + dark title bar support
 if(WIN32)
     set_target_properties(bootmod-gui PROPERTIES WIN32_EXECUTABLE TRUE)
+    target_link_libraries(bootmod-gui PRIVATE dwmapi)
 endif()
 
 # Install
