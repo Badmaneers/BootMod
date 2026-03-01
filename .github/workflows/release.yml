@@ -83,3 +83,74 @@ jobs:
             ${{ env.PACKAGE_FILE }}
             ${{ env.SHA_FILE }}
           body: ${{ env.RELEASE_BODY }}
+
+  build-windows:
+    name: Build & Release (Windows)
+    runs-on: windows-latest
+    needs: build-linux
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.0'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          dir: ${{ runner.temp }}/qt
+
+      - name: Install vcpkg dependencies
+        shell: bash
+        run: |
+          vcpkg install zlib:x64-windows libpng:x64-windows
+
+      - name: Extract version
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION=$(grep -m1 "^VERSION" Makefile | grep -o "[0-9][0-9.]*")
+            [ -z "$VERSION" ] && VERSION="2.5.0"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build and bundle
+        shell: cmd
+        run: build-windows.bat
+
+      - name: Package as zip
+        shell: bash
+        run: |
+          mkdir -p dist
+          PACKAGE_NAME="bootmod-v${{ env.VERSION }}-windows-x64.zip"
+          7z a "dist/${PACKAGE_NAME}" ./dist-win/*
+          MD5_VAL=$(certutil -hashfile "dist/${PACKAGE_NAME}" MD5 | sed -n '2p' | tr -d ' \r\n')
+          echo "${MD5_VAL}  ${PACKAGE_NAME}" > "dist/${PACKAGE_NAME}.md5"
+          echo "PACKAGE_FILE=dist/${PACKAGE_NAME}" >> $GITHUB_ENV
+          echo "MD5_FILE=dist/${PACKAGE_NAME}.md5" >> $GITHUB_ENV
+          echo "APP_MD5=${MD5_VAL}" >> $GITHUB_ENV
+
+      - name: Append Windows artifacts to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          files: |
+            ${{ env.PACKAGE_FILE }}
+            ${{ env.MD5_FILE }}
+          append_body: true
+          body: |
+            * **Windows (zip) MD5**: `${{ env.APP_MD5 }}`

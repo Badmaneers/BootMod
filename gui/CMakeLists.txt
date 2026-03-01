@@ -133,8 +133,17 @@ target_link_libraries(bootmod-gui PRIVATE
     PNG::PNG
     lodepng
     BitmapEditorLib
-    stdc++fs
 )
+
+# stdc++fs is only needed on GCC < 9; MSVC has std::filesystem built-in
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.0")
+    target_link_libraries(bootmod-gui PRIVATE stdc++fs)
+endif()
+
+# Windows: GUI app uses WinMain subsystem so no console window appears
+if(WIN32)
+    set_target_properties(bootmod-gui PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
 
 # Install
 install(TARGETS bootmod-gui

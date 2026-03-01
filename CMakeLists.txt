@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(bootmod VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find required libraries
@@ -52,8 +52,12 @@ target_link_libraries(bootmod
     lodepng
     ${PNG_LIBRARIES}
     ${ZLIB_LIBRARIES}
-    stdc++fs
 )
+
+# stdc++fs is only needed on GCC < 9; MSVC has std::filesystem built-in
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.0")
+    target_link_libraries(bootmod stdc++fs)
+endif()
 
 # Compiler flags
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -62,6 +66,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         -Wextra
         -Wpedantic
     )
+elseif(MSVC)
+    target_compile_options(bootmod PRIVATE /W4 /utf-8)
+endif()
+
+# Windows: console subsystem for CLI tool
+if(WIN32)
+    set_target_properties(bootmod PROPERTIES WIN32_EXECUTABLE FALSE)
 endif()
 
 # Installation

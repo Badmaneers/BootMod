@@ -3,9 +3,9 @@
 #include <fstream>
 #include <vector>
 #include <cstring>
-#include <experimental/filesystem>
+#include <filesystem>
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 namespace samsung {
 
@@ -70,7 +70,7 @@ bool UpParam::unpack(const std::string& up_param_file, const std::string& output
 
         // Only process normal files (typeflag '0' or '\0')
         if (header.typeflag[0] == '0' || header.typeflag[0] == '\0') {
-            std::string out_path = output_dir + "/" + fs::path(filename).filename().string();
+            std::string out_path = (fs::path(output_dir) / fs::path(filename).filename()).string();
             std::ofstream out(out_path, std::ios::binary);
             if (!out.is_open()) {
                 std::cerr << "Failed to create output file " << out_path << "\n";
@@ -176,8 +176,8 @@ bool UpParam::repack(const std::vector<std::string>& input_files, const std::str
         snprintf(header.mode, sizeof(header.mode), "%07o", 0644);
         snprintf(header.uid, sizeof(header.uid), "%07o", 0);
         snprintf(header.gid, sizeof(header.gid), "%07o", 0);
-        snprintf(header.size, sizeof(header.size), "%011zo", size);
-        snprintf(header.mtime, sizeof(header.mtime), "%011zo", (size_t)time(nullptr));
+        snprintf(header.size, sizeof(header.size), "%011llo", (unsigned long long)size);
+        snprintf(header.mtime, sizeof(header.mtime), "%011llo", (unsigned long long)time(nullptr));
         header.typeflag[0] = '0';
         std::memcpy(header.magic, "ustar ", 6);
         header.version[0] = ' ';

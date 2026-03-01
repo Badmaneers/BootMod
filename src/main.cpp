@@ -4,13 +4,13 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
-#include <experimental/filesystem>
+#include <filesystem>
 
 #ifndef VERSION
 #define VERSION "1.6.0"
 #endif
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 void printUsage(const char* program) {
     std::cout << "BootMod - Universal Boot Logo/Splash Editor v" << VERSION << "\n";
