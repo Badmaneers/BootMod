@@ -1,5 +1,6 @@
 #include "bootmod.h"
 #include "splash.h"
+#include "upparam.h"
 #include <iostream>
 #include <cstring>
 #include <vector>
@@ -13,10 +14,10 @@ namespace fs = std::experimental::filesystem;
 
 void printUsage(const char* program) {
     std::cout << "BootMod - Universal Boot Logo/Splash Editor v" << VERSION << "\n";
-    std::cout << "Supports: MediaTek logo.bin, Qualcomm splash.img\n\n";
+    std::cout << "Supports: MediaTek logo.bin, Qualcomm splash.img, Samsung up_param.tar\n\n";
     std::cout << "Usage: " << program << " <command> [options]\n\n";
     std::cout << "Commands:\n";
-    std::cout << "  unpack <logo.bin|splash.img> <output_dir> [options]\n";
+    std::cout << "  unpack <logo.bin|splash.img|up_param.tar> <output_dir> [options]\n";
     std::cout << "    Extract logos from boot image file\n";
     std::cout << "    Options (MTK only):\n";
     std::cout << "      --mode <mode>        Color mode (bgrabe, bgrale, rgbabe, rgbale, rgb565be, rgb565le)\n";
@@ -24,8 +25,8 @@ void printUsage(const char* program) {
     std::cout << "      --raw                Extract as raw .z files without decompression\n";
     std::cout << "      --flip               Flip orientation\n";
     std::cout << "\n";
-    std::cout << "  repack <output.bin> <file1> <file2> ... [options]\n";
-    std::cout << "    Repack logo files into logo.bin (MTK format)\n";
+    std::cout << "  repack <output.bin|.tar> <file1> <file2> ... [options]\n";
+    std::cout << "    Repack files into image (MTK logo.bin or Samsung up_param.tar)\n";
     std::cout << "    Options:\n";
     std::cout << "      --strip-alpha        Remove alpha channel\n";
     std::cout << "\n";
@@ -74,7 +75,7 @@ int cmdUnpack(int argc, char* argv[]) {
     // Detect format
     bootmod::FormatType format = bootmod::detectFormat(input_file);
     
-    if (format == bootmod::FormatType::OPPO_SPLASH) {
+    if (format == bootmod::FormatType::SD_SPLASH) {
         // Unpack Snapdragon splash.img
         bootmod::splash::SplashImage splash;
         if (!splash.load(input_file)) {
@@ -130,8 +131,12 @@ int cmdUnpack(int argc, char* argv[]) {
         
         return mtklogo::MtkLogo::unpack(input_file, output_dir, mode, slots, extract_raw, flip) ? 0 : 1;
         
+    } else if (format == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+        // Unpack Samsung up_param.tar
+        return samsung::UpParam::unpack(input_file, output_dir) ? 0 : 1;
+        
     } else {
-        std::cerr << "Error: Unknown file format (not MTK logo.bin or OPPO splash.img)\n";
+        std::cerr << "Error: Unknown file format (not MTK logo.bin, OPPO splash.img, or Samsung up_param)\n";
         return 1;
     }
 }
@@ -162,6 +167,13 @@ int cmdRepack(int argc, char* argv[]) {
         return 1;
     }
     
+    // Determine target format by ext
+    bool is_tar = (output_file.size() > 4 && output_file.substr(output_file.size() - 4) == ".tar");
+    bool is_upparam = (output_file.find("up_param") != std::string::npos);
+    if (is_tar || is_upparam) {
+        return samsung::UpParam::repack(input_files, output_file) ? 0 : 1;
+    }
+    
     return mtklogo::MtkLogo::repack(input_files, output_file, strip_alpha) ? 0 : 1;
 }
 
@@ -174,7 +186,7 @@ int cmdInfo(int argc, char* argv[]) {
     std::string input_file = argv[2];
     bootmod::FormatType format = bootmod::detectFormat(input_file);
     
-    if (format == bootmod::FormatType::OPPO_SPLASH) {
+    if (format == bootmod::FormatType::SD_SPLASH) {
         // Show Snapdragon splash.img info
         bootmod::splash::SplashImage splash;
         if (!splash.load(input_file)) {
@@ -246,6 +258,12 @@ int cmdInfo(int argc, char* argv[]) {
             return 1;
         }
         
+    } else if (format == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+        std::cout << "Samsung up_param Information\n";
+        std::cout << "=============================\n";
+        std::cout << "File: " << input_file << "\n";
+        std::cout << "Format: POSIX tar archive\n";
+        return 0;
     } else {
         std::cerr << "Error: Unknown file format\n";
         return 1;

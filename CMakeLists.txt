@@ -26,12 +26,15 @@ set(SOURCES
     src/bootmod.cpp
     src/bootmod_png.cpp
     src/splash.cpp
+    src/upparam.cpp
     src/main.cpp
 )
 
 # Header files
 set(HEADERS
     include/bootmod.h
+    include/splash.h
+    include/upparam.h
     include/version.h
 )
 

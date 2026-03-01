@@ -27,11 +27,19 @@ FormatType detectFormat(const std::string& filename) {
     }
     
     // Check for OPPO splash magic at offset 0x4000
+    file.clear(); // Clear EOF flags from previous operations if file was smaller
     file.seekg(0x4000);
     char oppo_magic[12];
-    file.read(oppo_magic, 12);
-    if (memcmp(oppo_magic, "SPLASH LOGO!", 12) == 0) {
-        return FormatType::OPPO_SPLASH;
+    if (file.read(oppo_magic, 12) && memcmp(oppo_magic, "SPLASH LOGO!", 12) == 0) {
+        return FormatType::SD_SPLASH;
+    }
+    
+    // Check for POSIX tar format (ustar magic at offset 257)
+    file.clear(); // Clear EOF flags
+    file.seekg(257);
+    char tar_magic[6];
+    if (file.read(tar_magic, 6) && (memcmp(tar_magic, "ustar\0", 6) == 0 || memcmp(tar_magic, "ustar ", 6) == 0)) {
+        return FormatType::SAMSUNG_UP_PARAM;
     }
     
     return FormatType::UNKNOWN;

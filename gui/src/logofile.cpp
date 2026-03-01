@@ -10,8 +10,10 @@
 #include <QDateTime>
 #include <QRegularExpression>
 #include <QFileDialog>
+#include <QTemporaryDir>
 #include <algorithm>
 #include <fstream>
+#include "../../include/upparam.h"
 
 using namespace mtklogo;
 
@@ -35,9 +37,12 @@ bool LogoFile::loadFile(const QString &path) {
     if (m_currentFormat == bootmod::FormatType::MTK_LOGO) {
         m_formatType = "MediaTek";
         return loadMtkFile(path);
-    } else if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+    } else if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
         m_formatType = "Snapdragon";
         return loadSplashFile(path);
+    } else if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+        m_formatType = "Samsung";
+        return loadUpParamFile(path);
     } else {
         emit errorOccurred(QString("Unsupported file format: %1\n\n"
                                    "This tool supports:\n"
@@ -298,7 +303,24 @@ bool LogoFile::extractLogo(int index, const QString &outputPath) {
     }
     
     try {
-        if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+        if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+            // Samsung up_param: rawData is the original JPEG/PNG bytes
+            const LogoEntry& entry = m_logos[index - 1];
+            if (entry.rawData.empty()) {
+                emit errorOccurred("No raw data for this entry");
+                return false;
+            }
+            QFile outFile(outputPath);
+            if (!outFile.open(QIODevice::WriteOnly)) {
+                emit errorOccurred("Failed to open output file: " + outputPath);
+                return false;
+            }
+            outFile.write(reinterpret_cast<const char*>(entry.rawData.data()), entry.rawData.size());
+            outFile.close();
+            emit operationCompleted(QString("Exported %1 to %2").arg(entry.format).arg(outputPath));
+            return true;
+
+        } else if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
             // Snapdragon splash.img extraction
             if (!m_splashImage) {
                 emit errorOccurred("Splash image not loaded");
@@ -357,7 +379,10 @@ bool LogoFile::extractAll(const QString &outputDir) {
     int success = 0;
     for (int i = 0; i < m_logos.size(); ++i) {
         QString filename;
-        if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+        if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+            // Use original filename stored in entry.format
+            filename = m_logos[i].format;
+        } else if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
             filename = QString("image_%1.png").arg(i);
         } else {
             filename = QString("logo_%1_%2x%3.png")
@@ -375,7 +400,7 @@ bool LogoFile::extractAll(const QString &outputDir) {
     emit operationCompleted(QString("Extracted %1/%2 %3 to %4")
         .arg(success)
         .arg(m_logos.size())
-        .arg(m_currentFormat == bootmod::FormatType::OPPO_SPLASH ? "images" : "logos")
+        .arg(m_currentFormat == bootmod::FormatType::SD_SPLASH ? "images" : "logos")
         .arg(outputDir));
     
     return success == m_logos.size();
@@ -400,7 +425,7 @@ bool LogoFile::replaceLogo(int index, const QString &imagePath) {
     }
     
     try {
-        if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+        if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
             // Handle Snapdragon splash.img format
             qDebug() << "Replacing Snapdragon splash image...";
             
@@ -451,6 +476,7 @@ bool LogoFile::replaceLogo(int index, const QString &imagePath) {
             }
             
             qDebug() << "Replace complete!";
+            emit thumbnailUpdated(index);
             emit operationCompleted(QString("Replaced splash image %1").arg(index));
             return true;
             
@@ -527,9 +553,58 @@ bool LogoFile::replaceLogo(int index, const QString &imagePath) {
                 emit logoCountChanged(); // This triggers GridView to refresh
             }
             
+            emit thumbnailUpdated(index);
             emit operationCompleted(QString("Replaced logo #%1 in project").arg(index));
             return true;
             
+} else if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+            // Samsung up_param: copy replacement file into project images dir
+            qDebug() << "Replacing Samsung up_param image...";
+
+            LogoEntry& entry = m_logos[index - 1];
+            QString originalFilename = entry.format; // e.g. "logo.jpg"
+
+            // Read the new image bytes
+            QFile srcFile(imagePath);
+            if (!srcFile.open(QIODevice::ReadOnly)) {
+                emit errorOccurred("Failed to open replacement image: " + imagePath);
+                return false;
+            }
+            QByteArray newData = srcFile.readAll();
+            srcFile.close();
+
+            // Copy into project images dir keeping original filename
+            if (!m_projectDir.isEmpty()) {
+                QString imagesDir = QDir(m_projectDir).filePath("images");
+                QString outputPath = QDir(imagesDir).filePath(originalFilename);
+                if (QFile::exists(outputPath)) QFile::remove(outputPath);
+                if (!QFile::copy(imagePath, outputPath)) {
+                    emit errorOccurred("Failed to copy replacement to project folder");
+                    return false;
+                }
+            }
+
+            // Update in-memory raw data
+            entry.rawData.assign(reinterpret_cast<const uint8_t*>(newData.constData()),
+                                 reinterpret_cast<const uint8_t*>(newData.constData()) + newData.size());
+            entry.size = newData.size();
+
+            // Update thumbnail — force QML to reload by clearing then re-adding
+            QImage newImage;
+            if (newImage.loadFromData(newData)) {
+                entry.width = newImage.width();
+                entry.height = newImage.height();
+                entry.thumbnail = createThumbnail(newImage);
+                if (m_thumbnailProvider) {
+                    m_thumbnailProvider->addThumbnail(index, QPixmap::fromImage(entry.thumbnail));
+                }
+                emit logoCountChanged();
+                emit thumbnailUpdated(index);
+            }
+
+            emit operationCompleted(QString("Replaced %1").arg(originalFilename));
+            return true;
+
         } else {
             emit errorOccurred("Unknown file format");
             return false;
@@ -556,7 +631,7 @@ bool LogoFile::saveFile(const QString &outputPath) {
     }
     
     try {
-        if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+        if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
             // Save Snapdragon splash.img
             qDebug() << "Saving Snapdragon splash.img...";
             
@@ -582,7 +657,35 @@ bool LogoFile::saveFile(const QString &outputPath) {
             
             emit operationCompleted(QString("Saved logo.bin to %1").arg(outputPath));
             return true;
-            
+
+        } else if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+            // Save Samsung up_param: repack all rawData entries into a tar
+            std::vector<std::string> tmpFiles;
+            QTemporaryDir tmpDir;
+            if (!tmpDir.isValid()) {
+                emit errorOccurred("Failed to create temporary directory");
+                return false;
+            }
+
+            for (const auto& logo : m_logos) {
+                if (logo.rawData.empty()) continue;
+                QString tmpPath = tmpDir.path() + "/" + logo.format;
+                QFile f(tmpPath);
+                if (f.open(QIODevice::WriteOnly)) {
+                    f.write(reinterpret_cast<const char*>(logo.rawData.data()), logo.rawData.size());
+                    f.close();
+                    tmpFiles.push_back(tmpPath.toStdString());
+                }
+            }
+
+            if (!samsung::UpParam::repack(tmpFiles, outputPath.toStdString())) {
+                emit errorOccurred("Failed to repack up_param");
+                return false;
+            }
+
+            emit operationCompleted(QString("Saved up_param to %1").arg(outputPath));
+            return true;
+
         } else {
             emit errorOccurred("Unknown file format");
             return false;
@@ -618,7 +721,7 @@ QString LogoFile::browseForSaveFile() {
     
     // Use appropriate default filename based on current format
     QString defaultFilename;
-    if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+    if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
         defaultFilename = "/splash.img";
     } else {
         defaultFilename = "/logo.bin";
@@ -655,11 +758,13 @@ QString LogoFile::browseForFolder() {
 
 QString LogoFile::browseForImage() {
     QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    QString filter = "PNG images (*.png);;All files (*)";
+    QString filter = (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM)
+        ? "Image files (*.jpg *.jpeg *.png);;JPEG images (*.jpg *.jpeg);;PNG images (*.png);;All files (*)"
+        : "PNG images (*.png);;All files (*)";
     
     QString path = QFileDialog::getOpenFileName(
         nullptr,
-        "Select PNG Image",
+        "Select Image",
         documentsPath,
         filter
     );
@@ -675,7 +780,15 @@ QString LogoFile::getImagePath(int index) {
     QString imagesDir = m_projectDir + "/images";
     QDir dir(imagesDir);
     
-    if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+    if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+        // Use original filename from entry
+        if (index >= 1 && index <= m_logos.size()) {
+            QString origName = m_logos[index - 1].format;
+            if (dir.exists(origName)) {
+                return imagesDir + "/" + origName;
+            }
+        }
+    } else if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
         QString filename = QString("image_%1.png").arg(index - 1);
         if (dir.exists(filename)) {
             return imagesDir + "/" + filename;
@@ -692,13 +805,22 @@ QString LogoFile::getImagePath(int index) {
 
 void LogoFile::browseAndExtractLogo(int index) {
     QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    QString defaultFilename = QString("/logo_%1.png").arg(index);
+    
+    QString defaultFilename;
+    QString filter;
+    if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM && index >= 1 && index <= m_logos.size()) {
+        defaultFilename = "/" + m_logos[index - 1].format;
+        filter = "Image files (*.jpg *.jpeg *.png);;All files (*)";
+    } else {
+        defaultFilename = QString("/logo_%1.png").arg(index);
+        filter = "PNG images (*.png);;All files (*)";
+    }
     
     QString path = QFileDialog::getSaveFileName(
         nullptr,
-        "Export Logo as PNG",
+        "Export Image",
         documentsPath + defaultFilename,
-        "PNG images (*.png);;All files (*)"
+        filter
     );
     
     if (!path.isEmpty()) {
@@ -709,11 +831,15 @@ void LogoFile::browseAndExtractLogo(int index) {
 void LogoFile::browseAndReplaceLogo(int index) {
     QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     
+    QString filter = (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM)
+        ? "Image files (*.jpg *.jpeg *.png);;JPEG images (*.jpg *.jpeg);;PNG images (*.png);;All files (*)"
+        : "PNG images (*.png);;All files (*)";
+    
     QString path = QFileDialog::getOpenFileName(
         nullptr,
-        "Select PNG Image to Replace Logo",
+        "Select Image to Replace",
         documentsPath,
-        "PNG images (*.png);;All files (*)"
+        filter
     );
     
     if (!path.isEmpty()) {
@@ -762,7 +888,16 @@ bool LogoFile::unpackToProject(const QString &logoPath, const QString &projectDi
     }
     
     // Extract all logos/images based on format
-    if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+    if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+        // Samsung up_param: preserve original filenames
+        for (const auto& logo : m_logos) {
+            QString outputPath = imagesDir + "/" + logo.format;
+            if (!extractLogo(logo.index, outputPath)) {
+                emit errorOccurred(QString("Failed to extract %1").arg(logo.format));
+                return false;
+            }
+        }
+    } else if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
         // Snapdragon format: use image_N.png naming
         for (const auto& logo : m_logos) {
             QString filename = QString("image_%1.png").arg(logo.index - 1); // 0-based for splash
@@ -810,20 +945,34 @@ bool LogoFile::openProject(const QString &projectDir) {
     
     // Read project metadata to determine format
     QString identifierPath = projectDir + "/.bootmod";
+    QString content;
     QFile file(identifierPath);
-    
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit errorOccurred("Failed to read project metadata");
-        return false;
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        content = file.readAll();
+        file.close();
     }
-    
-    QString content = file.readAll();
-    file.close();
+    // (missing .bootmod is OK — we'll auto-detect from image files below)
     
     // Extract format type
     QRegularExpression formatRegex("\"format\":\\s*\"(\\w+)\"");
     auto formatMatch = formatRegex.match(content);
-    QString formatStr = formatMatch.hasMatch() ? formatMatch.captured(1) : "mtk";
+    QString formatStr = formatMatch.hasMatch() ? formatMatch.captured(1) : "";
+
+    // Auto-detect if format is missing/unknown by inspecting image files
+    if (formatStr.isEmpty() || formatStr == "unknown") {
+        QDir imagesDir(projectDir + "/images");
+        QStringList jpgFiles = imagesDir.entryList(
+            QStringList() << "*.jpg" << "*.jpeg", QDir::Files);
+        QStringList pngFiles = imagesDir.entryList(
+            QStringList() << "logo_*.png", QDir::Files);
+        if (!jpgFiles.isEmpty()) {
+            formatStr = "samsung";
+        } else if (!pngFiles.isEmpty()) {
+            QStringList splashFiles = imagesDir.entryList(
+                QStringList() << "image_*.png", QDir::Files);
+            formatStr = splashFiles.isEmpty() ? "mtk" : "snapdragon";
+        }
+    }
     
     clearFile();
     m_projectDir = projectDir;
@@ -831,7 +980,7 @@ bool LogoFile::openProject(const QString &projectDir) {
     
     // Determine format
     if (formatStr == "snapdragon") {
-        m_currentFormat = bootmod::FormatType::OPPO_SPLASH;
+        m_currentFormat = bootmod::FormatType::SD_SPLASH;
         m_formatType = "Snapdragon";
         
         // For Snapdragon, we need to reload the original splash.img to get m_splashImage
@@ -906,7 +1055,7 @@ bool LogoFile::openProject(const QString &projectDir) {
                         }
                         
                         LogoEntry entry;
-                        entry.index = i;
+                        entry.index = i + 1;
                         entry.width = width;
                         entry.height = height;
                         entry.format = "BMP";
@@ -917,25 +1066,102 @@ bool LogoFile::openProject(const QString &projectDir) {
                         m_logos.append(entry);
                         
                         if (m_thumbnailProvider) {
-                            m_thumbnailProvider->addThumbnail(i, QPixmap::fromImage(entry.thumbnail));
+                            m_thumbnailProvider->addThumbnail(i + 1, QPixmap::fromImage(entry.thumbnail));
                         }
                     }
                     
                     qDebug() << "Loaded" << imageCount << "images from Snapdragon project";
                     
                 } else {
-                    emit errorOccurred(QString("Could not reload original splash.img from: %1\n\nPlace the original splash.img file in the same folder as the project.").arg(searchPath));
-                    return false;
+                    qWarning() << "Could not load splash.img from:" << searchPath << "— will try PNG fallback";
                 }
             } else {
-                emit errorOccurred(QString("Original file not found: %1\n\nSearched locations:\n• %1 (absolute)\n• %2 (relative to project)\n• %3 (in project parent folder)\n\nPlace the original splash.img in one of these locations.").arg(origFile, origFile, QFileInfo(projectDir).dir().filePath(QFileInfo(origFile).fileName())));
-                return false;
+                qWarning() << "Original splash.img not found at" << searchPath << "— will try PNG fallback";
             }
         } else {
-            // No original file specified in metadata
-            emit errorOccurred("Project metadata does not contain original file path.\n\nThis Snapdragon project requires the original splash.img file to be opened.");
+            // No original file in metadata — auto-detected from image_*.png
+            qWarning() << "Snapdragon project: no original file in .bootmod, trying PNG fallback";
+        }
+        
+        // If splash loading failed or was skipped, load from image_*.png (view-only)
+        if (m_logos.isEmpty()) {
+            QString imagesDir2 = projectDir + "/images";
+            QDir dir2(imagesDir2);
+            QStringList pngFiles2 = dir2.entryList(
+                QStringList() << "image_*.png", QDir::Files, QDir::Name);
+            std::sort(pngFiles2.begin(), pngFiles2.end(), [](const QString& a, const QString& b) {
+                QRegularExpression re("image_(\\d+)\\.png");
+                auto ma = re.match(a), mb = re.match(b);
+                if (ma.hasMatch() && mb.hasMatch())
+                    return ma.captured(1).toInt() < mb.captured(1).toInt();
+                return a < b;
+            });
+            for (const QString& fn : pngFiles2) {
+                QImage img(dir2.filePath(fn));
+                if (img.isNull()) continue;
+                LogoEntry entry;
+                entry.index      = m_logos.size() + 1;  // 1-based
+                entry.width      = img.width();
+                entry.height     = img.height();
+                entry.format     = fn;  // store filename for refreshSingleLogo
+                entry.size       = img.width() * img.height() * 4;
+                entry.thumbnail  = createThumbnail(img);
+                m_logos.append(entry);
+                if (m_thumbnailProvider)
+                    m_thumbnailProvider->addThumbnail(entry.index, QPixmap::fromImage(entry.thumbnail));
+            }
+            if (m_logos.isEmpty()) {
+                emit errorOccurred("No images found in Snapdragon project.");
+                return false;
+            }
+            m_headerInfo = QString("Images: %1 | Format: Snapdragon (view-only)").arg(m_logos.size());
+            qDebug() << "Loaded" << m_logos.size() << "images from Snapdragon project PNGs (view-only)";
+        }
+        
+    } else if (formatStr == "samsung") {
+        m_currentFormat = bootmod::FormatType::SAMSUNG_UP_PARAM;
+        m_formatType = "Samsung";
+        
+        QString imagesDir = projectDir + "/images";
+        QDir dir(imagesDir);
+        QStringList imageFiles = dir.entryList(
+            QStringList() << "*.jpg" << "*.jpeg" << "*.png", QDir::Files, QDir::Name);
+        
+        if (imageFiles.isEmpty()) {
+            emit errorOccurred("No images found in Samsung project.");
             return false;
         }
+        
+        for (int i = 0; i < imageFiles.size(); ++i) {
+            QString imagePath = imagesDir + "/" + imageFiles[i];
+            QFile f(imagePath);
+            if (!f.open(QIODevice::ReadOnly)) continue;
+            QByteArray bytes = f.readAll();
+            f.close();
+            
+            QImage img;
+            if (!img.loadFromData(bytes)) {
+                qWarning() << "Failed to load Samsung image:" << imagePath;
+                continue;
+            }
+            
+            LogoEntry entry;
+            entry.index  = i + 1;
+            entry.width  = img.width();
+            entry.height = img.height();
+            entry.format = imageFiles[i]; // original filename
+            entry.size   = bytes.size();
+            entry.rawData.assign(
+                reinterpret_cast<const uint8_t*>(bytes.constData()),
+                reinterpret_cast<const uint8_t*>(bytes.constData()) + bytes.size());
+            entry.thumbnail = createThumbnail(img);
+            
+            m_logos.append(entry);
+            if (m_thumbnailProvider)
+                m_thumbnailProvider->addThumbnail(entry.index, QPixmap::fromImage(entry.thumbnail));
+        }
+        
+        m_headerInfo = QString("Images: %1 | Format: Samsung up_param").arg(m_logos.size());
         
     } else {
         // MediaTek format
@@ -1099,7 +1325,60 @@ void LogoFile::rescanProjectImages() {
         
         qDebug() << "Rescan complete. Logo count:" << m_logos.size();
         emit logoCountChanged();
+
+    } else if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+        QString imagesDir = m_projectDir + "/images";
+        QDir dir(imagesDir);
+        dir.refresh();
+
+        // Reload all Samsung images (jpg/png) preserving original filenames
+        m_logos.clear();
+        if (m_thumbnailProvider) m_thumbnailProvider->clear();
+
+        QStringList imageFiles = dir.entryList(QStringList() << "*.jpg" << "*.jpeg" << "*.png",
+                                               QDir::Files, QDir::Name);
+        for (int i = 0; i < imageFiles.size(); ++i) {
+            const QString& filename = imageFiles[i];
+            QString imagePath = imagesDir + "/" + filename;
+
+            QFile imgFile(imagePath);
+            if (!imgFile.open(QIODevice::ReadOnly)) continue;
+            QByteArray bytes = imgFile.readAll();
+            imgFile.close();
+
+            LogoEntry entry;
+            entry.index = i + 1;
+            entry.format = filename;
+            entry.size = bytes.size();
+            entry.rawData.assign(reinterpret_cast<const uint8_t*>(bytes.constData()),
+                                 reinterpret_cast<const uint8_t*>(bytes.constData()) + bytes.size());
+
+            QImage image;
+            if (image.loadFromData(bytes)) {
+                entry.width = image.width();
+                entry.height = image.height();
+                entry.thumbnail = createThumbnail(image);
+                if (m_thumbnailProvider) {
+                    m_thumbnailProvider->addThumbnail(entry.index, QPixmap::fromImage(entry.thumbnail));
+                }
+            }
+            m_logos.append(entry);
+        }
+
+        qDebug() << "Samsung rescan complete. Image count:" << m_logos.size();
+        emit logoCountChanged();
     }
+}
+
+int LogoFile::getLogoIndexByFilename(const QString &filename) {
+    QFileInfo fi(filename);
+    QString name = fi.fileName(); // strip directory
+    for (int i = 0; i < m_logos.size(); ++i) {
+        if (m_logos[i].format == name) {
+            return m_logos[i].index;
+        }
+    }
+    return -1;
 }
 
 void LogoFile::refreshSingleLogo(int index) {
@@ -1166,6 +1445,51 @@ void LogoFile::refreshSingleLogo(int index) {
         } catch (const std::exception& e) {
             qWarning() << "Failed to process" << imagePath << ":" << e.what();
         }
+    } else if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
+        // Reload from image_N.png in project folder
+        if (index < 1 || index > m_logos.size()) return;
+        QString imagesDir = m_projectDir + "/images";
+        QString imagePath = imagesDir + QString("/image_%1.png").arg(index - 1);
+        QImage img(imagePath);
+        if (img.isNull()) {
+            qWarning() << "refreshSingleLogo SD_SPLASH: cannot load" << imagePath;
+            return;
+        }
+        int logoIdx = index - 1;
+        m_logos[logoIdx].width     = img.width();
+        m_logos[logoIdx].height    = img.height();
+        m_logos[logoIdx].thumbnail = createThumbnail(img);
+        if (m_thumbnailProvider)
+            m_thumbnailProvider->addThumbnail(index, QPixmap::fromImage(m_logos[logoIdx].thumbnail));
+        qDebug() << "  Refreshed Snapdragon image" << index;
+    } else if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+        // Find the entry by 1-based index and reload from disk
+        if (index < 1 || index > m_logos.size()) return;
+        LogoEntry& entry = m_logos[index - 1];
+
+        QString imagePath = m_projectDir + "/images/" + entry.format;
+        QFile imgFile(imagePath);
+        if (!imgFile.open(QIODevice::ReadOnly)) {
+            qWarning() << "Cannot open" << imagePath;
+            return;
+        }
+        QByteArray bytes = imgFile.readAll();
+        imgFile.close();
+
+        entry.rawData.assign(reinterpret_cast<const uint8_t*>(bytes.constData()),
+                             reinterpret_cast<const uint8_t*>(bytes.constData()) + bytes.size());
+        entry.size = bytes.size();
+
+        QImage image;
+        if (image.loadFromData(bytes)) {
+            entry.width = image.width();
+            entry.height = image.height();
+            entry.thumbnail = createThumbnail(image);
+            if (m_thumbnailProvider) {
+                m_thumbnailProvider->addThumbnail(index, QPixmap::fromImage(entry.thumbnail));
+            }
+        }
+        qDebug() << "  Refreshed Samsung image" << index << entry.format;
     }
 }
 
@@ -1207,9 +1531,78 @@ bool LogoFile::exportProject(const QString &outputPath) {
 
 bool LogoFile::isProjectFolder(const QString &path) {
     QDir dir(path);
-    return dir.exists() && 
-           QFile::exists(path + "/.bootmod") &&
-           QDir(path + "/images").exists();
+    if (!dir.exists()) return false;
+
+    // Accept any folder that has an images/ subdirectory with image files
+    QDir imagesDir(path + "/images");
+    if (!imagesDir.exists()) return false;
+
+    QStringList anyImages = imagesDir.entryList(
+        QStringList() << "*.jpg" << "*.jpeg" << "*.png" << "*.bin",
+        QDir::Files);
+    return !anyImages.isEmpty();
+}
+
+bool LogoFile::loadUpParamFile(const QString &path) {
+    QFileInfo fileInfo(path);
+    
+    try {
+        std::vector<samsung::UpParamEntry> entries = samsung::UpParam::read(path.toStdString());
+        
+        if (entries.empty()) {
+            emit errorOccurred("No images found in up_param.tar");
+            return false;
+        }
+        
+        // Extract header info
+        m_headerInfo = QString("Images: %1 | Format: Samsung up_param")
+            .arg(entries.size());
+        
+        // Create entries for each image
+        for (size_t i = 0; i < entries.size(); ++i) {
+            auto& entryData = entries[i];
+            
+            LogoEntry entry;
+            entry.index = i + 1;
+            entry.size = entryData.data.size();
+            entry.format = QString::fromStdString(entryData.filename);
+            
+            if (!entryData.data.empty()) {
+                entry.rawData = entryData.data; // store raw bytes for later extraction
+                QImage image;
+                if (image.loadFromData(entryData.data.data(), entryData.data.size())) {
+                    entry.width = image.width();
+                    entry.height = image.height();
+                    entry.thumbnail = createThumbnail(image);
+                    
+                    // Add to thumbnail provider
+                    if (m_thumbnailProvider) {
+                        m_thumbnailProvider->addThumbnail(entry.index, QPixmap::fromImage(entry.thumbnail));
+                    }
+                } else {
+                    entry.width = 0;
+                    entry.height = 0;
+                }
+            }
+            
+            m_logos.append(entry);
+        }
+        
+        m_filePath = path;
+        m_isLoaded = true;
+        
+        emit filePathChanged();
+        emit isLoadedChanged();
+        emit logoCountChanged();
+        emit headerInfoChanged();
+        emit formatTypeChanged();
+        
+        return true;
+        
+    } catch (const std::exception& e) {
+        emit errorOccurred(QString("Failed to read Samsung up_param: %1").arg(e.what()));
+        return false;
+    }
 }
 
 bool LogoFile::createProjectIdentifier(const QString &projectDir) {
@@ -1225,8 +1618,10 @@ bool LogoFile::createProjectIdentifier(const QString &projectDir) {
     QString formatName = "unknown";
     if (m_currentFormat == bootmod::FormatType::MTK_LOGO) {
         formatName = "mtk";
-    } else if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+    } else if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
         formatName = "snapdragon";
+    } else if (m_currentFormat == bootmod::FormatType::SAMSUNG_UP_PARAM) {
+        formatName = "samsung";
     }
     
     QTextStream out(&file);
@@ -1250,7 +1645,7 @@ bool LogoFile::createProjectIdentifier(const QString &projectDir) {
         readme << "BootMod Project\n";
         readme << "===============\n\n";
         
-        if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+        if (m_currentFormat == bootmod::FormatType::SD_SPLASH) {
             readme << "This folder contains an unpacked Snapdragon splash.img file.\n";
         } else {
             readme << "This folder contains an unpacked MediaTek logo.bin file.\n";

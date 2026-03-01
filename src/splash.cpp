@@ -30,12 +30,12 @@ bool SplashImage::isValidSplash(const std::string& filename) {
         return false;
     }
     
-    // Check for OPPO_SPLASH magic at offset 0x4000
-    file.seekg(OPPO_SPLASH_HDR_OFFSET);
+    // Check for SD_SPLASH magic at offset 0x4000
+    file.seekg(SD_SPLASH_HDR_OFFSET);
     char magic[12];
     file.read(magic, 12);
     
-    return (memcmp(magic, OPPO_SPLASH_MAGIC, 12) == 0);
+    return (memcmp(magic, SD_SPLASH_MAGIC, 12) == 0);
 }
 
 bool SplashImage::load(const std::string& filename) {
@@ -52,12 +52,12 @@ bool SplashImage::load(const std::string& filename) {
     file.read(reinterpret_cast<char*>(&ddph_header_), sizeof(ddph_header_));
     has_ddph_ = (ddph_header_.magic == DDPH_MAGIC_V1);
     
-    // Read OPPO_SPLASH header
-    file.seekg(OPPO_SPLASH_HDR_OFFSET);
+    // Read SD_SPLASH header
+    file.seekg(SD_SPLASH_HDR_OFFSET);
     file.read(reinterpret_cast<char*>(&splash_header_), sizeof(splash_header_));
     
     // Validate magic
-    if (memcmp(splash_header_.magic, OPPO_SPLASH_MAGIC, 12) != 0) {
+    if (memcmp(splash_header_.magic, SD_SPLASH_MAGIC, 12) != 0) {
         std::cerr << "Invalid splash.img magic" << std::endl;
         return false;
     }
@@ -105,8 +105,8 @@ bool SplashImage::save(const std::string& filename) {
         current_offset += metadata_[i].compsz;
     }
     
-    // Write OPPO_SPLASH header
-    file.seekp(OPPO_SPLASH_HDR_OFFSET);
+    // Write SD_SPLASH header
+    file.seekp(SD_SPLASH_HDR_OFFSET);
     file.write(reinterpret_cast<const char*>(&splash_header_), sizeof(splash_header_));
     
     // Write metadata

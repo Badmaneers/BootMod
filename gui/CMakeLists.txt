@@ -45,6 +45,7 @@ set(SOURCES
     ../src/bootmod.cpp
     ../src/bootmod_png.cpp
     ../src/splash.cpp
+    ../src/upparam.cpp
 )
 
 set(HEADERS
@@ -132,6 +133,7 @@ target_link_libraries(bootmod-gui PRIVATE
     PNG::PNG
     lodepng
     BitmapEditorLib
+    stdc++fs
 )
 
 # Install

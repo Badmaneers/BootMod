@@ -42,6 +42,10 @@ ApplicationWindow {
     LogoFile {
         id: logoFile
         onOperationCompleted: (message) => statusText.showSuccess(message)
+        onThumbnailUpdated: (index) => {
+            logoFile.refreshSingleLogo(index)
+            root.thumbnailRefreshTimestamp = Date.now()
+        }
         onErrorOccurred: (message) => statusText.showError(message)
     }
     
@@ -880,6 +884,9 @@ ApplicationWindow {
                 logoIndex = parseInt(match[1]);
             } else if (matchSplash && matchSplash[1]) {
                 logoIndex = parseInt(matchSplash[1]) + 1; // 0-based for splash
+            } else {
+                // Samsung: look up by filename
+                logoIndex = logoFile.getLogoIndexByFilename(path);
             }
             
             if (logoIndex !== -1) {

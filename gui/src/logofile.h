@@ -69,6 +69,7 @@ public:
     Q_INVOKABLE bool exportProject(const QString &outputPath);
     Q_INVOKABLE bool isProjectFolder(const QString &path);
     Q_INVOKABLE QString getImagePath(int index);
+    Q_INVOKABLE int getLogoIndexByFilename(const QString &filename);  // Returns 1-based index or -1
     Q_INVOKABLE void rescanProjectImages();  // Rescan images folder to update logo count
     Q_INVOKABLE void refreshSingleLogo(int index);  // Refresh just one logo's thumbnail
     
@@ -83,6 +84,7 @@ signals:
     void formatTypeChanged();
     void errorOccurred(const QString &message);
     void operationCompleted(const QString &message);
+    void thumbnailUpdated(int index);
 
 private:
     QString m_filePath;
@@ -105,6 +107,7 @@ private:
     // Format-specific loaders
     bool loadMtkFile(const QString &path);
     bool loadSplashFile(const QString &path);
+    bool loadUpParamFile(const QString &path);
     bool createProjectIdentifier(const QString &projectDir);
     bool loadProjectMetadata(const QString &projectDir);
 };

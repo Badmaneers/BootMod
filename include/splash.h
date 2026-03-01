@@ -29,8 +29,8 @@ typedef struct {
 } ddph_hdr_t;
 
 // OPPO Splash Header (at offset 0x4000)
-#define OPPO_SPLASH_MAGIC "SPLASH LOGO!"
-#define OPPO_SPLASH_HDR_OFFSET 0x4000
+#define SD_SPLASH_MAGIC "SPLASH LOGO!"
+#define SD_SPLASH_HDR_OFFSET 0x4000
 
 typedef struct {
     uint8_t magic[12];              // "SPLASH LOGO!"
@@ -41,10 +41,10 @@ typedef struct {
     uint32_t width;                 // Display width
     uint32_t height;                // Display height
     uint32_t special;               // Special flags
-} oppo_splash_hdr_t;
+} sd_splash_hdr_t;
 
 // Metadata offset calculation
-#define METADATA_OFFSET (sizeof(oppo_splash_hdr_t) + OPPO_SPLASH_HDR_OFFSET)
+#define METADATA_OFFSET (sizeof(sd_splash_hdr_t) + SD_SPLASH_HDR_OFFSET)
 
 typedef struct {
     uint32_t offset;                // Offset from DATA_OFFSET
@@ -183,7 +183,7 @@ private:
     
     std::string filename_;
     ddph_hdr_t ddph_header_;
-    oppo_splash_hdr_t splash_header_;
+    sd_splash_hdr_t splash_header_;
     std::vector<splash_metadata_hdr_t> metadata_;
     
     bool has_ddph_;

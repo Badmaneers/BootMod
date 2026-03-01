@@ -21,8 +21,8 @@ LODEPNG_DIR = $(EXTERNAL_DIR)/lodepng
 LODEPNG_SRC = $(LODEPNG_DIR)/lodepng.cpp
 
 # Source files
-SOURCES = $(SRC_DIR)/bootmod.cpp $(SRC_DIR)/bootmod_png.cpp $(SRC_DIR)/splash.cpp $(SRC_DIR)/main.cpp $(LODEPNG_SRC)
-OBJECTS = $(BUILD_DIR)/bootmod.o $(BUILD_DIR)/bootmod_png.o $(BUILD_DIR)/splash.o $(BUILD_DIR)/main.o $(BUILD_DIR)/lodepng.o
+SOURCES = $(SRC_DIR)/bootmod.cpp $(SRC_DIR)/bootmod_png.cpp $(SRC_DIR)/splash.cpp $(SRC_DIR)/upparam.cpp $(SRC_DIR)/main.cpp $(LODEPNG_SRC)
+OBJECTS = $(BUILD_DIR)/bootmod.o $(BUILD_DIR)/bootmod_png.o $(BUILD_DIR)/splash.o $(BUILD_DIR)/upparam.o $(BUILD_DIR)/main.o $(BUILD_DIR)/lodepng.o
 TARGET = $(PROJECT)
 
 # Default target
@@ -53,7 +53,10 @@ $(BUILD_DIR)/splash.o: $(SRC_DIR)/splash.cpp $(INCLUDE_DIR)/splash.h $(INCLUDE_D
 $(BUILD_DIR)/lodepng.o: $(LODEPNG_SRC) $(LODEPNG_DIR)/lodepng.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/main.o: $(SRC_DIR)/main.cpp $(INCLUDE_DIR)/bootmod.h $(INCLUDE_DIR)/splash.h $(INCLUDE_DIR)/version.h
+$(BUILD_DIR)/upparam.o: $(SRC_DIR)/upparam.cpp $(INCLUDE_DIR)/upparam.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/main.o: $(SRC_DIR)/main.cpp $(INCLUDE_DIR)/bootmod.h $(INCLUDE_DIR)/splash.h $(INCLUDE_DIR)/upparam.h $(INCLUDE_DIR)/version.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Clean build files

@@ -13,7 +13,8 @@ namespace bootmod {
 enum class FormatType {
     UNKNOWN,
     MTK_LOGO,      // MediaTek logo.bin
-    OPPO_SPLASH    // Snapdragon splash.img
+    SD_SPLASH,   // Snapdragon splash.img
+    SAMSUNG_UP_PARAM // Samsung up_param.tar/.img
 };
 
 // Format detection utility
