@@ -23,6 +23,7 @@ static void applyWindowsDarkTitleBar(QObject *rootObject) {
 }
 #endif
 
+#include <QFile>
 #include "logofile.h"
 #include "logolistmodel.h"
 #include "thumbnailprovider.h"
@@ -37,7 +38,12 @@ static void applyWindowsDarkTitleBar(QObject *rootObject) {
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
-    
+
+    // Apply the bitmap editor's dark QSS theme to all QWidgets (including embedded bitmap editor)
+    QFile theme(":/src/theme/Combinear.qss");
+    if (theme.open(QFile::ReadOnly))
+        app.setStyleSheet(theme.readAll());
+
     app.setOrganizationName("BootMod");
     app.setApplicationName("BootMod");
     app.setApplicationVersion(BOOTMOD_VERSION);
