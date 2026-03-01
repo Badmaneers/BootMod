@@ -44,6 +44,9 @@ int main(int argc, char *argv[]) {
     if (theme.open(QFile::ReadOnly))
         app.setStyleSheet(theme.readAll());
 
+    // App icon — SVG is in the Qt resource system; works for taskbar + window chrome
+    app.setWindowIcon(QIcon(":/BootMod/res/bootmod_logo.svg"));
+
     app.setOrganizationName("BootMod");
     app.setApplicationName("BootMod");
     app.setApplicationVersion(BOOTMOD_VERSION);

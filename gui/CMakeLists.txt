@@ -140,10 +140,15 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_L
     target_link_libraries(bootmod-gui PRIVATE stdc++fs)
 endif()
 
-# Windows-specific: GUI subsystem + dark title bar support
+# Windows-specific: GUI subsystem + dark title bar support + exe icon
 if(WIN32)
     set_target_properties(bootmod-gui PROPERTIES WIN32_EXECUTABLE TRUE)
     target_link_libraries(bootmod-gui PRIVATE dwmapi)
+    # Embed the icon into the .exe (requires res/bootmod.ico).
+    # Generate it from the SVG with e.g.: magick res/bootmod_logo.svg -resize 256x256 res/bootmod.ico
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/res/bootmod.ico")
+        target_sources(bootmod-gui PRIVATE res/bootmod.rc)
+    endif()
 endif()
 
 # Install
