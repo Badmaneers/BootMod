@@ -59,7 +59,7 @@ Examples:
   $0 --clean --release        # Clean + Release build
   $0 --cli-only               # Build only CLI tool
   $0 --gui-only               # Build only GUI
-  $0 --version 2.0.0 --release --package  # Version 2.0.0 release
+  $0 --version 2.5.0 --release --package  # Version 2.5.0 release
 
 EOF
     exit 0

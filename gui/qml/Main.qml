@@ -365,32 +365,6 @@ ApplicationWindow {
                                 }
                             }
                             
-                            Button {
-                                text: "Device Preview"
-                                enabled: logoFile.isProjectMode && logoFile.logoCount > 0 && logoFile.formatType === "MediaTek"
-                                Layout.preferredWidth: 130
-                                Layout.preferredHeight: 32
-                                onClicked: devicePreviewDialog.startPreview(1)  // Start from frame 1
-                                
-                                background: Rectangle {
-                                    implicitWidth: 130
-                                    implicitHeight: 32
-                                    color: parent.enabled ? (parent.hovered ? "#3d4f7d" : "#2d3f5f") : root.surfaceColor
-                                    border.color: parent.enabled ? "#4a90e2" : root.borderColor
-                                    border.width: 1
-                                    radius: root.radius / 2
-                                    opacity: parent.enabled ? 1.0 : 0.5
-                                }
-                                
-                                contentItem: Text {
-                                    text: parent.text
-                                    font.pixelSize: 12
-                                    color: parent.enabled ? "#4a90e2" : root.textSecondaryColor
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                            }
-                            
                             Item { Layout.fillWidth: true }
                             
                             Button {
@@ -698,6 +672,43 @@ ApplicationWindow {
                                         ToolTip.text: "Replace only works in project mode. Use 'Unpack to Project' first."
                                         ToolTip.delay: 500
                                     }
+                                    
+                                    Button {
+                                        Layout.fillWidth: true
+                                        text: "Edit"
+                                        font.pixelSize: 11
+                                        enabled: logoFile.isProjectMode
+                                        
+                                        onClicked: {
+                                            var path = logoFile.getImagePath(logoIndex)
+                                            if (path !== "") {
+                                                bitmapEditor.openEditor(path)
+                                            } else {
+                                                statusText.showError("Could not find image path")
+                                            }
+                                        }
+                                        
+                                        background: Rectangle {
+                                            implicitHeight: 28
+                                            color: parent.enabled ? (parent.hovered ? root.accentColor : "transparent") : "transparent"
+                                            border.color: parent.enabled ? root.accentColor : "#404040"
+                                            border.width: 1
+                                            radius: root.radius / 2
+                                            opacity: parent.enabled ? 1.0 : 0.3
+                                        }
+                                        
+                                        contentItem: Text {
+                                            text: parent.text
+                                            font.pixelSize: 11
+                                            color: parent.enabled ? root.textColor : root.textSecondaryColor
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                        
+                                        ToolTip.visible: !logoFile.isProjectMode && hovered
+                                        ToolTip.text: "Edit only works in project mode. Use 'Unpack to Project' first."
+                                        ToolTip.delay: 500
+                                    }
                                 }
                             }
                             
@@ -854,37 +865,32 @@ ApplicationWindow {
         id: aboutDialog
     }
     
-    // Device Preview Dialog
-    DevicePreviewDialog {
-        id: devicePreviewDialog
+    // Bitmap Editor Wrapper for editing images directly
+    BitmapEditorWrapper {
+        id: bitmapEditor
         
-        // Connect to bitmap editor signal to refresh thumbnails
-        onImageEdited: function(path) {
+        onImageSaved: function(path) {
             console.log("Main window: Image edited, refreshing thumbnail for:", path)
-            // Extract the logo index from the path (e.g., logo_1_720x1600.png -> 1)
-            var match = path.match(/logo_(\d+)_/)
+            // Extract the logo index from the path (e.g., logo_1_720x1600.png or image_0.png)
+            var match = path.match(/logo_(\d+)_/);
+            var matchSplash = path.match(/image_(\d+)\.png/);
+            var logoIndex = -1;
+            
             if (match && match[1]) {
-                var logoIndex = parseInt(match[1])
+                logoIndex = parseInt(match[1]);
+            } else if (matchSplash && matchSplash[1]) {
+                logoIndex = parseInt(matchSplash[1]) + 1; // 0-based for splash
+            }
+            
+            if (logoIndex !== -1) {
                 refreshSpecificThumbnail(logoIndex)
             } else {
-                // Fallback to refreshing all if we can't parse the index
                 refreshThumbnails()
             }
         }
         
-        // When dialog closes, refresh all edited thumbnails to ensure they're up to date
-        onDialogClosed: function() {
-            console.log("Device Preview Dialog closed")
-            console.log("Edited logos during session:", devicePreviewDialog.editedLogos)
-            
-            // Refresh each edited logo
-            if (devicePreviewDialog.editedLogos && devicePreviewDialog.editedLogos.length > 0) {
-                console.log("Refreshing", devicePreviewDialog.editedLogos.length, "edited thumbnails")
-                for (var i = 0; i < devicePreviewDialog.editedLogos.length; i++) {
-                    var logoIndex = devicePreviewDialog.editedLogos[i]
-                    refreshSpecificThumbnail(logoIndex)
-                }
-            }
+        onEditorClosed: function() {
+            console.log("Bitmap editor closed")
         }
     }
     

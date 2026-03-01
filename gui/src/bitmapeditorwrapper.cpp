@@ -12,11 +12,22 @@
 #include <QPainter>
 #include <QEvent>
 
+inline void initBitmapEditorResources() {
+    Q_INIT_RESOURCE(icons);
+    Q_INIT_RESOURCE(theme);
+    Q_INIT_RESOURCE(splash);
+}
+
 BitmapEditorWrapper::BitmapEditorWrapper(QObject *parent)
     : QObject(parent)
     , m_editorWindow(nullptr)
     , m_appContext(nullptr)
 {
+    static bool resourcesInitialized = false;
+    if (!resourcesInitialized) {
+        initBitmapEditorResources();
+        resourcesInitialized = true;
+    }
 }
 
 BitmapEditorWrapper::~BitmapEditorWrapper() {

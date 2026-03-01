@@ -31,7 +31,7 @@ MainWindow::MainWindow(BitmapAppContext *context, QWidget *parent)
     this->ui->setupUi(this);
     
     // Set window title for BootMod integration
-    this->setWindowTitle(tr("Logo Frame Editor - BootMod"));
+    this->setWindowTitle(tr("QTBitmap Editor - BootMod"));
     
     // Setup toolbar
     this->colorPicker = new ColorPicker(this->ui->toolBar);
@@ -59,7 +59,7 @@ MainWindow::MainWindow(BitmapAppContext *context, QWidget *parent)
     // Label for status bar
     this->statusLabel = new QLabel(this->ui->statusbar);
     this->statusLabel->setAlignment(Qt::AlignLeft);
-    this->statusLabel->setText(tr("Logo Frame Editor"));
+    this->statusLabel->setText(tr("QTBitmap Editor"));
     this->statusBar()->addPermanentWidget(this->statusLabel, 1);
     /*****************************************************************************/
 
@@ -150,9 +150,9 @@ void MainWindow::updateStatusBar()
 {
     Project *p = this->context->getProject();
     if(p == NULL) {
-        this->statusLabel->setText(tr("Logo Frame Editor"));
+        this->statusLabel->setText(tr("QTBitmap Editor"));
     } else {
-        this->statusLabel->setText(QString(tr("Editing: %1x%2 Logo Frame")).arg(p->getSize().width()).arg(p->getSize().height()));
+        this->statusLabel->setText(QString(tr("Editing: %1x%2 QTBitmap")).arg(p->getSize().width()).arg(p->getSize().height()));
     }
 }
 

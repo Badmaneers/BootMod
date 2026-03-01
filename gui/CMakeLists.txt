@@ -63,7 +63,6 @@ set(HEADERS
 set(QML_FILES
     qml/Main.qml
     qml/AboutDialog.qml
-    qml/DevicePreviewDialog.qml
 )
 
 # Resource files

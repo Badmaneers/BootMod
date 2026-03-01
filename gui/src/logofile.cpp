@@ -667,6 +667,29 @@ QString LogoFile::browseForImage() {
     return path;
 }
 
+QString LogoFile::getImagePath(int index) {
+    if (m_projectDir.isEmpty() || !m_isLoaded) {
+        return QString();
+    }
+    
+    QString imagesDir = m_projectDir + "/images";
+    QDir dir(imagesDir);
+    
+    if (m_currentFormat == bootmod::FormatType::OPPO_SPLASH) {
+        QString filename = QString("image_%1.png").arg(index - 1);
+        if (dir.exists(filename)) {
+            return imagesDir + "/" + filename;
+        }
+    } else {
+        QStringList imageFiles = dir.entryList(QStringList() << QString("logo_%1_*.png").arg(index), QDir::Files, QDir::Name);
+        if (!imageFiles.isEmpty()) {
+            return imagesDir + "/" + imageFiles.first();
+        }
+    }
+    
+    return QString();
+}
+
 void LogoFile::browseAndExtractLogo(int index) {
     QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     QString defaultFilename = QString("/logo_%1.png").arg(index);
