@@ -1,0 +1,85 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: Build & Release (Linux)
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake \
+            qt6-base-dev qt6-declarative-dev \
+            libqt6quick6 libqt6qml6 \
+            libz-dev libpng-dev
+
+      - name: Extract version
+        id: extract_version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION=$(grep -m1 "^VERSION" Makefile | grep -o "[0-9][0-9.]*")
+            [ -z "$VERSION" ] && VERSION="2.5.0"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Detected version: $VERSION"
+
+      - name: Build release package
+        run: |
+          chmod +x build.sh
+          ./build.sh --release --package
+
+      - name: Locate package
+        run: |
+          PACKAGE_FILE=$(ls dist/bootmod-v*.tar.gz | head -n 1)
+          SHA_FILE="${PACKAGE_FILE}.sha256"
+          echo "PACKAGE_FILE=$PACKAGE_FILE" >> $GITHUB_ENV
+          echo "SHA_FILE=$SHA_FILE" >> $GITHUB_ENV
+          SHA_VAL=$(cut -d' ' -f1 "$SHA_FILE")
+          echo "APP_SHA256=$SHA_VAL" >> $GITHUB_ENV
+          echo "Found package: $PACKAGE_FILE"
+
+      - name: Generate changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"* %s (%h)" --no-merges)
+          else
+            CHANGELOG=$(git log "${PREV_TAG}..HEAD" --pretty=format:"* %s (%h)" --no-merges)
+          fi
+          {
+            echo "RELEASE_BODY<<EOF"
+            echo "## What's Changed"
+            echo "$CHANGELOG"
+            echo ""
+            echo "## Checksums"
+            echo "* **Linux (tar.gz) SHA256**: \`${{ env.APP_SHA256 }}\`"
+            echo "EOF"
+          } >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: BootMod v${{ env.VERSION }}
+          files: |
+            ${{ env.PACKAGE_FILE }}
+            ${{ env.SHA_FILE }}
+          body: ${{ env.RELEASE_BODY }}

@@ -325,9 +325,9 @@ create_release_package() {
     mkdir -p "dist/${RELEASE_NAME}/bin"
     
     # Copy CLI binary
-    if [ "$BUILD_CLI" = true ] && [ -f "bin/mtklogo" ]; then
+    if [ "$BUILD_CLI" = true ] && [ -f "bin/bootmod" ]; then
         print_step "Copying CLI binary..."
-        cp bin/mtklogo "dist/${RELEASE_NAME}/bin/"
+        cp bin/bootmod "dist/${RELEASE_NAME}/bin/"
         print_success "CLI binary included"
     fi
     
