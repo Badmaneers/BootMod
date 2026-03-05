@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <algorithm>
+#include <cmath>
 
 namespace bootmod {
 
@@ -177,7 +179,124 @@ public:
     
     // Guess image dimensions from size
     static std::vector<std::pair<uint32_t, uint32_t>> guessDimensions(size_t byte_size,
-                                                                       ColorMode mode);
+                                                                       ColorMode mode) {
+        std::vector<std::pair<uint32_t, uint32_t>> results;
+        uint32_t bpp = ImageUtils::getBytesPerPixel(mode);
+
+        size_t pixel_count = byte_size / bpp;
+
+        // Common screen dimensions (portrait orientation: width < height)
+        std::vector<std::pair<uint32_t, uint32_t>> common_resolutions = {
+            // Modern smartphones (portrait)
+            {720, 1600},   // HD+ (18:9)
+            {720, 1560},   // HD+ with notch
+            {720, 1520},   // HD+
+            {720, 1440},   // HD+ (18:9)
+            {720, 1280},   // HD (16:9)
+            {1080, 2400},  // FHD+ (20:9)
+            {1080, 2340},  // FHD+ with notch
+            {1080, 2280},  // FHD+ (19:9)
+            {1080, 2160},  // FHD+ (18:9)
+            {1080, 1920},  // FHD (16:9)
+            {1440, 3200},  // QHD+ (20:9)
+            {1440, 3040},  // QHD+ (19:9)
+            {1440, 2960},  // QHD+ (18.5:9)
+            {1440, 2880},  // QHD+ (18:9)
+            {1440, 2560},  // QHD (16:9)
+            // Tablets / landscape screens
+            {2560, 800},   // WUXGA tablet landscape
+            {800, 1280},   // WXGA tablet portrait
+            // Older/smaller devices
+            {480, 856},    // FWVGA variant
+            {480, 854},    // FWVGA
+            {480, 853},    // FWVGA variant
+            {480, 800},    // WVGA
+            {540, 960},    // qHD
+            {600, 1024},   // WSVGA
+            {640, 1136},   // iPhone 5
+            {750, 1334},   // iPhone 6/7/8
+            {320, 480},    // HVGA
+            {240, 320},    // QVGA
+            // Small icons/indicators (prefer square, then portrait)
+            {28, 28},
+            {36, 51}, {36, 50}, {50, 36},
+            {30, 60}, {60, 30},
+            {40, 45}, {45, 40},
+            {56, 14}, {14, 56},
+            {7, 112}, {112, 7},
+            // MTK splash indicator assets
+            {304, 52}, {304, 1},
+            {218, 51},
+            {169, 28}, {169, 1},
+            {163, 29}, {163, 1},
+            {138, 20}, {138, 2},
+            {135, 24}, {135, 1},
+            {108, 121},
+            {102, 1},
+            {84, 121},
+            {63, 105},
+            {57, 64},
+            {48, 54},
+            {45, 139}, {45, 64},
+            {38, 54},
+            {32, 105}, {32, 36},
+            {30, 27},
+            {27, 36},
+            {23, 33},
+            {34, 33},
+            {15, 27},
+            {10, 16}
+        };
+
+        // Check common resolutions first
+        for (const auto& res : common_resolutions) {
+            uint32_t width = res.first;
+            uint32_t height = res.second;
+            if (width * height * bpp == byte_size) {
+                results.push_back({width, height});
+            }
+        }
+
+        // If not found in common resolutions, try factorization
+        // but prefer dimensions with reasonable aspect ratios (portrait phone screens)
+        if (results.empty()) {
+            std::vector<std::pair<uint32_t, uint32_t>> all_factors;
+
+            for (uint32_t width = 1; (size_t)width * width <= pixel_count; width++) {
+                if (pixel_count % width == 0) {
+                    uint32_t height = (uint32_t)(pixel_count / width);
+                    if ((size_t)height * width * bpp == byte_size) {
+                        all_factors.push_back({width, height});
+                        if (width != height) {
+                            all_factors.push_back({height, width});
+                        }
+                    }
+                }
+            }
+
+            // Sort by aspect ratio preference (portrait phone screens: 16:9 to 20:9)
+            std::sort(all_factors.begin(), all_factors.end(),
+                [](const std::pair<uint32_t, uint32_t>& a,
+                   const std::pair<uint32_t, uint32_t>& b) {
+                    float ratio_a = static_cast<float>(a.second) / a.first;
+                    float ratio_b = static_cast<float>(b.second) / b.first;
+
+                    auto score = [](float r) -> float {
+                        if (r >= 1.5f && r <= 2.5f) return 1000.0f - std::abs(r - 2.0f);
+                        if (r == 1.0f) return 100.0f;
+                        if (r > 1.0f && r < 1.5f) return 50.0f;
+                        if (r > 2.5f) return 10.0f;
+                        return 1.0f;
+                    };
+
+                    return score(ratio_a) > score(ratio_b);
+                });
+
+            results = all_factors;
+        }
+
+        return results;
+    }
 };
 
 // Exception class
